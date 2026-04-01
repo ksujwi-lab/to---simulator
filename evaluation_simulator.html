@@ -1,0 +1,2866 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>평가 T/O 시뮬레이터</title>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:-apple-system,BlinkMacSystemFont,'Pretendard','Apple SD Gothic Neo',sans-serif;background:#f5f5f3;color:#1a1a18;min-height:100vh;font-size:14px;}
+.hidden{display:none!important;}
+h2{font-size:18px;font-weight:500;margin-bottom:1.5rem;}
+h3{font-size:15px;font-weight:500;margin-bottom:10px;}
+#entry-screen{min-height:100vh;display:flex;align-items:center;justify-content:center;}
+.entry-card{background:#fff;border:0.5px solid rgba(0,0,0,0.12);border-radius:16px;padding:2.5rem;width:380px;}
+.entry-title{font-size:20px;font-weight:500;margin-bottom:6px;}
+.entry-sub{font-size:13px;color:#666;margin-bottom:2rem;}
+.mode-btn{display:block;width:100%;padding:14px 18px;margin-bottom:10px;border:0.5px solid rgba(0,0,0,0.15);border-radius:10px;background:#fff;cursor:pointer;text-align:left;font-size:14px;color:#1a1a18;}
+.mode-btn:hover{background:#f5f5f3;}
+.mode-btn .btn-label{font-weight:500;display:block;margin-bottom:2px;}
+.mode-btn .btn-desc{font-size:12px;color:#888;}
+.mode-btn.hr-btn{border-color:#534AB7;}
+.mode-btn.hr-btn .btn-label{color:#3C3489;}
+#pw-overlay{min-height:180px;background:rgba(0,0,0,0.35);display:flex;align-items:center;justify-content:center;border-radius:16px;margin-top:12px;}
+#pw-overlay.hidden{display:none!important;}
+.pw-box{background:#fff;border-radius:12px;padding:1.5rem;width:290px;}
+.pw-box label{font-size:13px;color:#555;display:block;margin-bottom:6px;}
+.pw-box input{width:100%;padding:8px 10px;border:0.5px solid rgba(0,0,0,0.2);border-radius:8px;font-size:14px;margin-bottom:10px;outline:none;}
+.pw-box input:focus{border-color:#534AB7;}
+.pw-err{font-size:12px;color:#A32D2D;margin-bottom:8px;}
+.pw-row{display:flex;gap:8px;}
+.app-header{background:#fff;border-bottom:0.5px solid rgba(0,0,0,0.1);padding:0 2rem;display:flex;align-items:center;gap:16px;height:52px;}
+.app-logo{font-weight:500;font-size:15px;}
+.app-badge{font-size:11px;padding:2px 8px;border-radius:99px;font-weight:500;}
+.badge-hr{background:#EEEDFE;color:#3C3489;}
+.badge-dept{background:#E1F5EE;color:#085041;}
+.header-right{margin-left:auto;}
+.tab-bar{display:flex;gap:4px;padding:0 2rem;background:#fff;border-bottom:0.5px solid rgba(0,0,0,0.1);}
+.tab-btn{padding:10px 16px;font-size:13px;background:none;border:none;border-bottom:2px solid transparent;cursor:pointer;color:#888;font-weight:400;margin-bottom:-1px;}
+.tab-btn.active{border-bottom-color:#1a1a18;color:#1a1a18;font-weight:500;}
+.page-content{padding:2rem;max-width:1200px;}
+.page{display:none;}
+.page.active{display:block;}
+.card{background:#fff;border:0.5px solid rgba(0,0,0,0.1);border-radius:12px;padding:1.25rem;margin-bottom:1.25rem;overflow-x:auto;}
+.card-title{font-size:11px;font-weight:500;color:#888;text-transform:uppercase;letter-spacing:.05em;margin-bottom:10px;}
+.metric-row{display:grid;gap:10px;margin-bottom:1.25rem;}
+.metric-row.col3{grid-template-columns:repeat(3,minmax(0,1fr));}
+.metric-row.col4{grid-template-columns:repeat(4,minmax(0,1fr));}
+.metric-card{background:#f5f5f3;border-radius:8px;padding:12px 16px;}
+.metric-label{font-size:11px;color:#888;margin-bottom:3px;}
+.metric-value{font-size:20px;font-weight:500;}
+.metric-sub{font-size:11px;color:#888;margin-top:2px;}
+table{width:100%;border-collapse:collapse;font-size:13px;}
+th{text-align:left;font-size:11px;font-weight:500;color:#888;padding:7px 10px;border-bottom:0.5px solid rgba(0,0,0,0.1);white-space:nowrap;}
+td{padding:7px 10px;border-bottom:0.5px solid rgba(0,0,0,0.07);color:#1a1a18;vertical-align:middle;}
+tr:last-child td{border-bottom:none;}
+input[type=number],input[type=text]{border:0.5px solid rgba(0,0,0,0.18);border-radius:6px;padding:4px 7px;font-size:13px;background:#fff;color:#1a1a18;outline:none;}
+input[type=number]:focus,input[type=text]:focus{border-color:#534AB7;}
+.slider-group{background:#f5f5f3;border-radius:8px;padding:11px 14px;margin-bottom:7px;}
+.slider-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:7px;}
+input[type=range]{width:100%;accent-color:#534AB7;cursor:pointer;}
+.bar-wrap{height:5px;background:rgba(0,0,0,0.08);border-radius:3px;overflow:hidden;margin-top:5px;}
+.bar-fill{height:100%;border-radius:3px;transition:width 0.15s;}
+.badge{display:inline-block;padding:2px 8px;border-radius:99px;font-size:11px;font-weight:500;}
+.g1{background:#EEEDFE;color:#3C3489;} .g2{background:#E6F1FB;color:#0C447C;}
+.g3{background:#EAF3DE;color:#27500A;} .g4{background:#FAEEDA;color:#633806;}
+.g5{background:#FAECE7;color:#712B13;} .g6{background:#FCEBEB;color:#791F1F;}
+.lv3{background:#EEEDFE;color:#3C3489;font-size:10px;}
+.lv12{background:#E6F1FB;color:#0C447C;font-size:10px;}
+.ref-tag{display:inline-block;font-size:10px;padding:1px 5px;background:#F1EFE8;color:#5F5E5A;border-radius:4px;margin-left:4px;}
+.alert{padding:8px 12px;border-radius:8px;font-size:12px;margin-bottom:8px;}
+.alert-ok{background:#E1F5EE;color:#085041;}
+.alert-warn{background:#FAEEDA;color:#633806;}
+.alert-err{background:#FCEBEB;color:#791F1F;}
+.btn{padding:7px 14px;border:0.5px solid rgba(0,0,0,0.18);border-radius:8px;font-size:13px;background:#fff;cursor:pointer;color:#1a1a18;}
+.btn:hover{background:#f5f5f3;}
+.btn.primary{background:#534AB7;color:#fff;border-color:#534AB7;}
+.btn.danger{color:#A32D2D;border-color:rgba(162,45,45,0.3);}
+.btn.danger:hover{background:#FCEBEB;}
+.btn-sm{padding:6px 12px;border:0.5px solid rgba(0,0,0,0.18);border-radius:8px;font-size:13px;background:#fff;cursor:pointer;}
+.btn-sm.primary{background:#534AB7;color:#fff;border-color:#534AB7;}
+.btn-sm:hover{opacity:0.85;}
+.exit-btn{font-size:12px;padding:5px 12px;border:0.5px solid rgba(0,0,0,0.18);border-radius:8px;background:#fff;cursor:pointer;color:#555;}
+.exit-btn:hover{background:#f5f5f3;}
+.setting-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:1.25rem;}
+.setting-row{display:flex;align-items:center;gap:10px;margin-bottom:10px;}
+.setting-label{font-size:13px;color:#555;min-width:110px;}
+.range-val{font-size:13px;font-weight:500;min-width:44px;text-align:right;}
+.lv-divider{border:none;border-top:0.5px solid rgba(0,0,0,0.08);margin:10px 0;}
+.lock-banner{background:#F1EFE8;border:0.5px solid rgba(0,0,0,0.1);border-radius:8px;padding:10px 14px;font-size:12px;color:#5F5E5A;margin-bottom:1.25rem;display:flex;align-items:center;gap:8px;}
+.budget-bar-wrap{height:10px;background:rgba(0,0,0,0.08);border-radius:5px;overflow:hidden;margin:6px 0;}
+.budget-bar-fill{height:100%;border-radius:5px;transition:width 0.2s,background 0.2s;}
+.delta-pos{color:#0F6E56;}
+.delta-neg{color:#A32D2D;}
+.dept-to-layout{display:grid;grid-template-columns:1fr 370px;gap:20px;align-items:start;}
+.guide-panel{background:#fff;border:0.5px solid rgba(0,0,0,0.1);border-radius:12px;padding:1.25rem;}
+.gstab-bar{display:flex;gap:2px;margin-bottom:12px;border-bottom:0.5px solid rgba(0,0,0,0.08);}
+.gstab{padding:5px 10px;font-size:12px;background:none;border:none;border-bottom:2px solid transparent;cursor:pointer;color:#888;margin-bottom:-1px;}
+.gstab.on{border-bottom-color:#534AB7;color:#534AB7;font-weight:500;}
+.gpanel{display:none;}
+.gpanel.on{display:block;}
+.ratio-cell{display:inline-block;border-radius:5px;padding:1px 6px;font-size:11px;font-weight:500;}
+.ratio-high{background:#EAF3DE;color:#27500A;}
+.ratio-mid{background:#FAEEDA;color:#633806;}
+.ratio-low{background:#FCEBEB;color:#791F1F;}
+.trade-result-box{background:#f5f5f3;border-radius:8px;padding:10px 12px;margin-top:8px;}
+.code-box{background:#f5f5f3;border-radius:8px;padding:10px 14px;font-family:monospace;font-size:11px;word-break:break-all;color:#3C3489;border:0.5px solid rgba(83,74,183,0.2);margin-top:8px;}
+.info-note{font-size:12px;color:#888;background:#f5f5f3;border-radius:8px;padding:8px 12px;margin-bottom:12px;}
+</style>
+</head>
+<body>
+
+<!-- 진입 -->
+<div id="entry-screen">
+  <div class="entry-card">
+    <div class="entry-title">평가 T/O 시뮬레이터</div>
+    <div class="entry-sub">접속 유형을 선택하세요</div>
+    <button id="hr-mode-btn" class="mode-btn hr-btn" onclick="showPwOverlay()">
+      <span class="btn-label">HR 담당자</span>
+      <span class="btn-desc">기본 설정·재원·등급 배율 세팅 후 본부장용 코드 생성</span>
+    </button>
+    <button class="mode-btn" onclick="showDeptEntry()">
+      <span class="btn-label">본부장</span>
+      <span class="btn-desc">HR이 제공한 설정 코드를 입력하여 T/O 조정</span>
+    </button>
+    <div id="pw-overlay" class="hidden">
+      <div class="pw-box">
+        <label>HR 담당자 비밀번호</label>
+        <input type="password" id="pw-input" placeholder="비밀번호 입력" onkeydown="if(event.key==='Enter')checkPw()">
+        <div id="pw-err" class="pw-err hidden">비밀번호가 올바르지 않습니다</div>
+        <div class="pw-row">
+          <button class="btn-sm" onclick="hidePwOverlay()">취소</button>
+          <button class="btn-sm primary" onclick="checkPw()">확인</button>
+        </div>
+      </div>
+    </div>
+    <div id="dept-entry-area" class="hidden" style="margin-top:12px;">
+      <div class="pw-box" style="width:100%;">
+        <label>HR에서 받은 설정 코드 붙여넣기</label>
+        <input type="text" id="dept-code-input" placeholder="설정 코드 입력" style="width:100%;margin-bottom:10px;font-size:12px;" onkeydown="if(event.key==='Enter')loadDeptCode()">
+        <div id="dept-code-err" class="pw-err hidden">코드가 올바르지 않습니다</div>
+        <div class="pw-row">
+          <button class="btn-sm" onclick="hideDeptEntry()">취소</button>
+          <button class="btn-sm primary" onclick="loadDeptCode()">입장</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- HR 앱 -->
+<div id="hr-app" class="hidden">
+  <div class="app-header">
+    <span class="app-logo">평가 T/O 시뮬레이터</span>
+    <span class="app-badge badge-hr">HR 담당자</span>
+    <div class="header-right"><button class="exit-btn" onclick="exitToEntry()">나가기</button></div>
+  </div>
+  <div class="tab-bar">
+    <button class="tab-btn active" onclick="hrTab('hr-setup',this)">본부 설정</button>
+    <button class="tab-btn" onclick="hrTab('hr-grade',this)">등급·배율</button>
+    <button class="tab-btn" onclick="hrTab('hr-reward',this)">보상 재원</button>
+    <button class="tab-btn" onclick="hrTab('hr-preview',this)">전체 미리보기</button>
+    <button class="tab-btn" onclick="hrTab('hr-generate',this)">코드 생성</button>
+    <button class="tab-btn" onclick="hrTab('hr-collect',this)">결과 취합</button>
+  </div>
+  <div class="page-content">
+
+    <!-- 본부 설정 -->
+    <div id="hr-setup" class="page active">
+      <h2>본부 구성 설정</h2>
+      <!-- 세팅 저장 -->
+      <div class="card" style="margin-bottom:16px;background:#f0eff8;border:1px solid #d0cef5;">
+        <div style="font-size:13px;font-weight:600;color:#3C3489;margin-bottom:6px;">💡 세팅 저장 안내</div>
+        <div style="font-size:12px;color:#555;line-height:1.8;">
+          세팅값은 <b>코드 생성 탭의 URL</b>에 자동으로 포함됩니다.<br>
+          본부장에게 URL을 전달하면 HR 세팅값(보상·교환 규칙 등)이 그대로 적용됩니다.<br>
+          <span style="color:#888;">HR 세팅 변경 시 코드 생성 탭에서 URL을 새로 복사해서 재전달하세요.</span>
+        </div>
+      </div>
+      <div class="info-note">
+        평가 T/O는 <strong>팀장/팀원</strong>으로 구분하고, 보상 재원 계산은 <strong>L3/L1·L2</strong> 직급 기준급여를 별도 입력합니다.
+      </div>
+      <!-- 결과 수신 이메일 설정 -->
+      <div class="card" style="margin-bottom:16px;">
+        <h3>결과 제출 설정</h3>
+        <div class="setting-row">
+          <span class="setting-label">수신 이메일</span>
+          <input type="email" id="hr-result-email" placeholder="hr@company.com" style="width:260px;"
+            oninput="hrSaveEmail()" value="">
+          <span style="font-size:11px;color:#888;margin-left:8px;">선택 — Outlook 열기 시 수신자 자동 입력</span>
+        </div>
+      </div>
+      <div class="card">
+        <table>
+          <thead>
+            <tr>
+              <th rowspan="2" style="vertical-align:bottom;width:28px;"></th>
+              <th rowspan="2" style="vertical-align:bottom;">본부명</th>
+              <th rowspan="2" style="vertical-align:bottom;">조직등급</th>
+              <th colspan="2" style="text-align:center;padding-bottom:4px;">T/O 대상 인원</th>
+              <th colspan="3" style="text-align:center;padding-bottom:4px;color:#3C3489;">보상 기준급여 (만원)</th>
+              <th rowspan="2"></th>
+            </tr>
+            <tr>
+              <th>팀장 수</th>
+              <th>팀원 수</th>
+              <th style="color:#3C3489;">팀장 평균</th>
+              <th style="color:#3C3489;"><span class="badge lv3">L3</span> 팀원 평균</th>
+              <th style="color:#0C447C;"><span class="badge lv12">L1·L2</span> 팀원 평균</th>
+            </tr>
+          </thead>
+          <tbody id="hr-dept-tbody"></tbody>
+        </table>
+        <div style="margin-top:12px;"><button class="btn" onclick="hrAddDept()">+ 본부 추가</button></div>
+      </div>
+      <div class="info-note">
+        팀장 기준급여는 팀장 보상 재원 계산에 적용됩니다. L3·L1·L2는 팀원 직급별 기준급여입니다.
+      </div>
+    </div>
+
+    <!-- 등급·배율 -->
+    <div id="hr-grade" class="page">
+      <h2>등급 체계 및 배율 설정</h2>
+
+      <!-- T/O 비율표 -->
+      <div class="card">
+        <h3>평가 T/O 비율 <span style="font-size:12px;font-weight:400;color:#888;">(조직등급별 차등 적용)</span></h3>
+        <table>
+          <thead>
+            <tr>
+              <th rowspan="2" style="vertical-align:bottom;">등급</th>
+              <th colspan="3" style="text-align:center;border-bottom:0.5px solid rgba(0,0,0,0.08);">팀장</th>
+              <th colspan="3" style="text-align:center;border-bottom:0.5px solid rgba(0,0,0,0.08);">팀원</th>
+            </tr>
+            <tr>
+              <th style="color:#0F6E56;">S</th><th style="color:#185FA5;">A</th><th style="color:#633806;">B이하</th>
+              <th style="color:#0F6E56;">S</th><th style="color:#185FA5;">A</th><th style="color:#633806;">B이하</th>
+            </tr>
+          </thead>
+          <tbody id="hr-to-ratio-tbody"></tbody>
+        </table>
+        <div style="margin-top:10px;font-size:12px;color:#888;">* 팀장 5등급, 팀원 6등급은 절대평가 / 본부 설정 탭에서 조직등급 선택</div>
+      </div>
+
+      <!-- 보상 세팅 통합 -->
+      <div class="card">
+        <h3>보상 세팅 <span style="font-size:12px;font-weight:400;color:#888;">성과급 기준값: <input type="number" id="hr-bonus-base-pct" min="0" max="500" step="5" value="210" oninput="hrUpdateReward()" style="width:65px;"> %&nbsp;&nbsp;|&nbsp;&nbsp;1·2등급: 기준값+가산치 / 3~6등급: 기준값×배수</span></h3>
+        <table>
+          <thead>
+            <tr>
+              <th rowspan="2" style="vertical-align:bottom;">등급</th>
+              <th rowspan="2" style="vertical-align:bottom;text-align:center;">성과급 설정<br><span style="font-size:10px;font-weight:400;color:#aaa;">1·2등급=가산치 / 3~6등급=배수</span></th>
+              <th rowspan="2" style="vertical-align:bottom;text-align:center;">최종<br>지급률</th>
+              <th colspan="2" style="text-align:center;border-bottom:0.5px solid rgba(0,0,0,0.08);color:#3C3489;">Base-up 배수</th>
+              <th colspan="2" style="text-align:center;border-bottom:0.5px solid rgba(0,0,0,0.08);color:#534AB7;">성과인상 배수</th>
+            </tr>
+            <tr>
+              <th style="color:#3C3489;">L3</th>
+              <th style="color:#0C447C;">L1·L2</th>
+              <th style="color:#3C3489;">L3</th>
+              <th style="color:#0C447C;">L1·L2</th>
+            </tr>
+          </thead>
+          <tbody id="hr-grade-tbody"></tbody>
+        </table>
+        <div style="margin-top:10px;font-size:12px;color:#888;">* Base-up·성과인상 배수: 보상 재원 탭의 정액 기준값 × 등급별 배수로 산정</div>
+      </div>
+    </div>
+
+    <!-- 보상 재원 -->
+    <div id="hr-reward" class="page">
+      <h2>보상 재원 기준 설정</h2>
+      <div class="info-note">
+        성과급은 팀장/팀원 구분 없이 동일 배율 적용. 연봉인상(Base-up·성과인상)은 <span class="badge lv3">L3</span>와 <span class="badge lv12">L1·L2</span> 직급별로 별도 설정합니다.
+      </div>
+
+      <!-- L3/L12 인원 직접 세팅 (선택) -->
+      <div class="card">
+        <h3>직급별 인원 설정 <span style="font-size:12px;font-weight:400;color:#888;">(본부 설정의 팀장=L3, 팀원=L1·L2와 다를 경우 수동 입력)</span></h3>
+        <table>
+          <thead>
+            <tr>
+              <th>본부</th>
+              <th>팀장(명)</th><th>팀원(명)</th>
+              <th style="color:#3C3489;">L3 인원(명) <span style="font-weight:400;font-size:10px;">↑보상계산용</span></th>
+              <th style="color:#0C447C;">L1·L2 인원(명) <span style="font-weight:400;font-size:10px;">↑보상계산용</span></th>
+            </tr>
+          </thead>
+          <tbody id="hr-lv-tbody"></tbody>
+        </table>
+        <div style="margin-top:8px;font-size:11px;color:#aaa;">비워두면 팀장 수 = L3, 팀원 수 = L1·L2 로 자동 적용</div>
+      </div>
+
+      <div class="setting-grid">
+        <div class="card">
+          <h3>성과급</h3>
+          <div style="font-size:12px;color:#888;background:#f5f5f3;border-radius:8px;padding:10px 12px;">
+            성과급 기준값 및 등급별 가산치는 <strong>등급·배율 탭</strong>에서 설정합니다.<br>
+            현재 기준값: <span id="hr-bonus-base-display" style="font-weight:500;color:#3C3489;">-</span> / L3·L1·L2 공통 적용
+          </div>
+        </div>
+        <div class="card">
+          <h3>연봉인상 <span style="font-size:12px;font-weight:400;color:#888;">정액 기준 (단위: 만원)</span></h3>
+          <div style="font-size:11px;font-weight:500;color:#888;letter-spacing:.04em;margin-bottom:8px;">BASE-UP 정액 (전 등급 공통)</div>
+          <div class="setting-row">
+            <span class="setting-label"><span class="badge lv3">L3</span> 정액</span>
+            <input type="number" id="hr-baseup-l3" min="0" max="5000" step="10" value="160" oninput="hrUpdateReward()" style="width:90px;">
+            <span style="font-size:12px;color:#888;">만원 / 인</span>
+          </div>
+          <div class="setting-row">
+            <span class="setting-label"><span class="badge lv12">L1·L2</span> 정액</span>
+            <input type="number" id="hr-baseup-l12" min="0" max="5000" step="10" value="130" oninput="hrUpdateReward()" style="width:90px;">
+            <span style="font-size:12px;color:#888;">만원 / 인</span>
+          </div>
+          <hr class="lv-divider">
+          <div style="font-size:11px;font-weight:500;color:#888;letter-spacing:.04em;margin-bottom:4px;">성과인상 정액 기준</div>
+          <div style="font-size:11px;color:#aaa;margin-bottom:10px;">각 직급별 기준값 입력 → 등급별 성과인상 배수(등급·배율 탭) 적용 → 5만원 단위 올림</div>
+          <div class="setting-row">
+            <span class="setting-label"><span class="badge lv3">L3</span> 기준</span>
+            <input type="number" id="hr-perfbase-l3" min="0" max="5000" step="5" value="120" oninput="hrUpdateReward()" style="width:90px;">
+            <span style="font-size:12px;color:#888;">만원 / 인</span>
+          </div>
+          <div class="setting-row">
+            <span class="setting-label"><span class="badge lv12">L1·L2</span> 기준</span>
+            <input type="number" id="hr-perfbase-l12" min="0" max="5000" step="5" value="103" oninput="hrUpdateReward()" style="width:90px;">
+            <span style="font-size:12px;color:#888;">만원 / 인</span>
+          </div>
+          <hr class="lv-divider">
+          <div style="font-size:11px;font-weight:500;color:#888;letter-spacing:.04em;margin-bottom:4px;">등급별 급여 보정 배수 <span style="font-size:10px;font-weight:400;color:#aaa;">— 고연봉자 상위등급 집중 리스크 반영</span></div>
+          <div style="font-size:11px;color:#aaa;margin-bottom:10px;">평균급여 대비 등급별 실제 급여 수준 보정 (1.0 = 평균, 1.1 = 평균의 110%)</div>
+          <table style="font-size:12px;margin-bottom:4px;">
+            <thead><tr>
+              <th>등급</th>
+              <th style="text-align:center;">팀장<br><span style="font-weight:400;font-size:10px;">보정 배수</span></th>
+              <th style="text-align:center;color:#3C3489;">L3 팀원<br><span style="font-weight:400;font-size:10px;">보정 배수</span></th>
+              <th style="text-align:center;color:#0C447C;">L1·L2 팀원<br><span style="font-weight:400;font-size:10px;">보정 배수</span></th>
+            </tr></thead>
+            <tbody id="hr-salary-mult-tbody"></tbody>
+          </table>
+          <div style="font-size:11px;color:#aaa;">* 성과급 계산 시 기준급여 × 보정 배수 적용 / 연봉인상은 정액이므로 미적용</div>
+          <table style="font-size:12px;">
+            <thead>
+              <tr>
+                <th>등급</th>
+                <th style="color:#3C3489;">L3<br><span style="font-weight:400;font-size:10px;">성과인상</span></th>
+                <th style="color:#3C3489;">L3<br><span style="font-weight:400;font-size:10px;">Base-up+성과인상</span></th>
+                <th style="color:#0C447C;">L1·L2<br><span style="font-weight:400;font-size:10px;">성과인상</span></th>
+                <th style="color:#0C447C;">L1·L2<br><span style="font-weight:400;font-size:10px;">Base-up+성과인상</span></th>
+              </tr>
+            </thead>
+            <tbody id="hr-perf-preview-tbody"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <div class="metric-row col4">
+        <div class="metric-card"><div class="metric-label">기준 성과급 총 재원</div><div class="metric-value" id="hr-r-bonus">-</div><div class="metric-sub">기준 T/O 기준</div></div>
+        <div class="metric-card"><div class="metric-label">기준 연봉인상 총 재원</div><div class="metric-value" id="hr-r-salary">-</div><div class="metric-sub">기준 T/O 기준</div></div>
+        <div class="metric-card"><div class="metric-label">기준 총 보상 재원</div><div class="metric-value" id="hr-r-total">-</div><div class="metric-sub">전사 합계</div></div>
+        <div class="metric-card">
+          <div class="metric-label">허용 변동 한도 ±<span id="hr-tolerance-val">3</span>%</div>
+          <div class="metric-value" id="hr-r-tolerance" style="font-size:13px;padding-top:4px;line-height:1.5;">-</div>
+          <input type="range" min="0" max="20" step="1" id="hr-tolerance" oninput="hrUpdateReward()" value="3" style="width:100%;accent-color:#534AB7;margin-top:8px;">
+        </div>
+      </div>
+
+      <!-- 보수적 재원 관리 -->
+      <div class="card">
+        <h3>보수적 재원 관리 <span style="font-size:12px;font-weight:400;color:#888;">조직평가 S/A 등급 발생 시 추가 재원 대비</span></h3>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px;">
+          <!-- 목표 재원 역산 -->
+          <div>
+            <div style="font-size:12px;font-weight:500;color:#555;margin-bottom:8px;">목표 재원 역산 도구 <span style="font-size:11px;font-weight:400;color:#888;">— 품의 목표 재원에 맞게 성과급%·연봉인상 정액 조정 시 활용</span></div>
+            <div class="setting-row" style="margin-bottom:8px;">
+              <span class="setting-label">조정율</span>
+              <input type="number" id="hr-buffer-pct" min="0" max="20" step="0.5" value="0" oninput="hrUpdateReward()" style="width:70px;">
+              <span style="font-size:12px;color:#888;">%</span>
+            </div>
+            <div style="font-size:12px;color:#888;margin-bottom:6px;">품의 목표 재원 = 현재 설정 재원 × (1 - 조정율)</div>
+            <div style="background:#EEEDFE;border-radius:8px;padding:10px 14px;">
+              <div style="font-size:11px;color:#534AB7;margin-bottom:4px;">품의 목표 재원</div>
+              <div style="font-size:18px;font-weight:600;color:#3C3489;" id="hr-r-adjusted">-</div>
+              <div style="font-size:11px;color:#888;margin-top:2px;">현재 재원 대비 <span id="hr-r-buffer-amt">-</span> 절감 필요</div>
+            </div>
+          </div>
+          <!-- B: B이하 기준 vs 현재 비교 -->
+          <div>
+            <div style="font-size:12px;font-weight:500;color:#555;margin-bottom:8px;">조직등급별 재원 비교 <span style="font-size:11px;font-weight:400;color:#888;">— 전사 B이하 기준 대비 현재 설정 차이</span></div>
+            <table style="font-size:12px;width:100%;">
+              <thead><tr>
+                <th style="text-align:left;padding:4px 0;">구분</th>
+                <th style="text-align:right;">재원 (만원)</th>
+                <th style="text-align:right;">차이</th>
+              </tr></thead>
+              <tbody>
+                <tr><td>전사 B이하 기준</td><td style="text-align:right;font-weight:500;" id="hr-r-base-b">-</td><td></td></tr>
+                <tr><td>현재 설정 기준</td><td style="text-align:right;font-weight:500;" id="hr-r-base-cur">-</td><td style="text-align:right;" id="hr-r-base-diff">-</td></tr>
+                <tr style="border-top:0.5px solid rgba(0,0,0,0.1);"><td style="padding-top:6px;color:#888;font-size:11px;">S/A 등급 추가 소요 추정</td><td colspan="2" style="text-align:right;padding-top:6px;font-size:11px;color:#888;" id="hr-r-sa-note">-</td></tr>
+                <tr><td colspan="3" style="padding-top:10px;">
+                  <button class="btn" style="width:100%;font-size:12px;padding:7px 0;background:#534AB7;color:#fff;border:none;" onclick="applyAutoBuffer()">
+                    S/A 추가 소요분 조정율 자동 계산
+                  </button>
+                  <div style="font-size:11px;color:#888;margin-top:5px;text-align:center;" id="hr-auto-buffer-note">— 조정율 미설정 —</div>
+                </td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- 교환 허용 범위 설정 -->
+      <div class="card">
+        <h3>등급간 T/O 조정 규칙 <span style="font-size:12px;font-weight:400;color:#888;">N등급 1명 하향 시 M등급 몇 명 상향 가능한지 설정</span></h3>
+        <div style="font-size:11px;color:#888;margin-bottom:12px;">셀값 = 하향 1명당 상향 가능 인원수 / 빈칸 = 교환 불가 / 팀장·팀원 각각 설정</div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px;">
+          <div>
+            <div style="font-size:12px;font-weight:600;color:#444;margin-bottom:8px;">팀장 교환 matrix</div>
+            <div style="font-size:10px;color:#aaa;margin-bottom:6px;">행 = 하향 등급 / 열 = 상향 등급 / 셀값 = 상향 가능 인원수</div>
+            <div style="overflow-x:auto;"><table id="hr-matrix-mgr" style="font-size:11px;border-collapse:collapse;"></table></div>
+          </div>
+          <div>
+            <div style="font-size:12px;font-weight:600;color:#444;margin-bottom:8px;">팀원 교환 matrix</div>
+            <div style="font-size:10px;color:#aaa;margin-bottom:6px;">행 = 하향 등급 / 열 = 상향 등급 / 셀값 = 상향 가능 인원수</div>
+            <div style="overflow-x:auto;"><table id="hr-matrix-mem" style="font-size:11px;border-collapse:collapse;"></table></div>
+          </div>
+        </div>
+        <hr class="lv-divider" style="margin-top:16px;">
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-top:12px;">
+          <div>
+            <div style="font-size:12px;font-weight:500;color:#555;margin-bottom:10px;">팀장 ↔ 팀원 교환</div>
+            <label style="display:flex;align-items:flex-start;gap:8px;margin-bottom:10px;cursor:pointer;">
+              <input type="radio" name="swap-cross" value="allowed" id="swap-cross-allowed" onchange="hrUpdateReward()" checked style="margin-top:2px;">
+              <div><div style="font-size:13px;font-weight:500;">교환 허용</div><div style="font-size:11px;color:#888;">팀장 1명 하향 → 팀원 N명 상향 가능</div></div>
+            </label>
+            <label style="display:flex;align-items:flex-start;gap:8px;cursor:pointer;">
+              <input type="radio" name="swap-cross" value="blocked" id="swap-cross-blocked" onchange="hrUpdateReward()" style="margin-top:2px;">
+              <div><div style="font-size:13px;font-weight:500;">교환 불가</div><div style="font-size:11px;color:#888;">팀장은 팀장끼리, 팀원은 팀원끼리만</div></div>
+            </label>
+          </div>
+          <div>
+            <div style="font-size:12px;font-weight:500;color:#555;margin-bottom:10px;">팀원 내 L3 ↔ L1·L2 교환</div>
+            <label style="display:flex;align-items:flex-start;gap:8px;margin-bottom:10px;cursor:pointer;">
+              <input type="radio" name="swap-lv" value="allowed" id="swap-lv-allowed" onchange="hrUpdateReward()" checked style="margin-top:2px;">
+              <div><div style="font-size:13px;font-weight:500;">교환 허용</div><div style="font-size:11px;color:#888;">팀원 T/O 조정 시 L3·L1·L2 구분 없이 계산</div></div>
+            </label>
+            <label style="display:flex;align-items:flex-start;gap:8px;cursor:pointer;">
+              <input type="radio" name="swap-lv" value="blocked" id="swap-lv-blocked" onchange="hrUpdateReward()" style="margin-top:2px;">
+              <div><div style="font-size:13px;font-weight:500;">교환 불가</div><div style="font-size:11px;color:#888;">L3는 L3끼리, L1·L2는 L1·L2끼리만 재원 계산</div></div>
+            </label>
+          </div>
+        </div>
+      </div>
+
+      <!-- 목표 재원 시뮬 -->
+      <div class="card">
+        <h3>목표 재원 시뮬 <span style="font-size:12px;font-weight:400;color:#888;">원본 세팅 유지 + 조정값 시뮬로 재원 비교</span></h3>
+        <div style="font-size:11px;color:#888;margin-bottom:14px;">아래 값을 조정해도 실제 세팅에는 영향 없음 — 목표 재원 도달 시 "현재 세팅에 적용" 버튼으로 반영</div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px;margin-bottom:16px;">
+          <!-- 성과급 시뮬 -->
+          <div>
+            <div style="font-size:12px;font-weight:600;color:#444;margin-bottom:10px;">성과급 기준값 조정</div>
+            <div class="setting-row">
+              <span class="setting-label">기준값</span>
+              <input type="number" id="sim-bonus-base" min="0" max="500" step="5" style="width:70px;" oninput="hrSimUpdate()">
+              <span style="font-size:12px;color:#888;">%</span>
+              <span style="font-size:11px;color:#aaa;margin-left:6px;">현재: <span id="sim-bonus-base-cur">-</span>%</span>
+            </div>
+          </div>
+          <!-- 연봉인상 시뮬 -->
+          <div>
+            <div style="font-size:12px;font-weight:600;color:#444;margin-bottom:10px;">연봉인상 정액 조정</div>
+            <div class="setting-row" style="margin-bottom:6px;">
+              <span class="setting-label"><span class="badge lv3">L3</span></span>
+              <input type="number" id="sim-baseup-l3" min="0" max="5000" step="5" style="width:80px;" oninput="hrSimUpdate()">
+              <span style="font-size:12px;color:#888;">만원</span>
+              <span style="font-size:11px;color:#aaa;margin-left:6px;">현재: <span id="sim-baseup-l3-cur">-</span></span>
+            </div>
+            <div class="setting-row">
+              <span class="setting-label"><span class="badge lv12">L1·L2</span></span>
+              <input type="number" id="sim-baseup-l12" min="0" max="5000" step="5" style="width:80px;" oninput="hrSimUpdate()">
+              <span style="font-size:12px;color:#888;">만원</span>
+              <span style="font-size:11px;color:#aaa;margin-left:6px;">현재: <span id="sim-baseup-l12-cur">-</span></span>
+            </div>
+          </div>
+        </div>
+        <!-- 재원 비교 -->
+        <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;margin-bottom:14px;">
+          <div style="background:#f5f5f3;border-radius:8px;padding:10px 14px;">
+            <div style="font-size:11px;color:#888;margin-bottom:4px;">현재 설정 재원</div>
+            <div style="font-size:16px;font-weight:600;" id="sim-cur-fund">-</div>
+          </div>
+          <div style="background:#EEEDFE;border-radius:8px;padding:10px 14px;">
+            <div style="font-size:11px;color:#534AB7;margin-bottom:4px;">시뮬 재원</div>
+            <div style="font-size:16px;font-weight:600;color:#3C3489;" id="sim-new-fund">-</div>
+            <div style="font-size:11px;margin-top:2px;" id="sim-diff">-</div>
+          </div>
+          <div style="background:#f0faf5;border-radius:8px;padding:10px 14px;">
+            <div style="font-size:11px;color:#1a6e3c;margin-bottom:4px;">품의 목표 재원</div>
+            <div style="font-size:16px;font-weight:600;color:#0F6E56;" id="sim-target-fund">-</div>
+            <div style="font-size:11px;color:#888;margin-top:2px;" id="sim-target-diff">-</div>
+          </div>
+        </div>
+        <button class="btn" style="background:#3C3489;color:#fff;border:none;padding:8px 20px;" onclick="hrSimApply()">현재 세팅에 적용</button>
+        <span style="font-size:11px;color:#888;margin-left:10px;">적용 시 실제 세팅값이 시뮬 값으로 변경됩니다</span>
+      </div>
+    </div>
+    <div id="hr-preview" class="page">
+      <h2>전체 미리보기</h2>
+      <div id="hr-preview-content"></div>
+    </div>
+
+    <!-- 코드 생성 -->
+    <div id="hr-generate" class="page">
+      <h2>본부장용 URL 생성</h2>
+      <!-- 이메일 템플릿 -->
+      <div class="card" style="margin-bottom:16px;">
+        <h3>이메일 본문 자동 생성 <span style="font-size:12px;font-weight:400;color:#888;">— 본부 선택 후 복사해서 Outlook에 붙여넣기</span></h3>
+        <div style="display:flex;gap:8px;align-items:center;margin-bottom:12px;">
+          <select id="hr-email-tmpl-dept" style="width:180px;font-size:13px;padding:6px;border:1px solid #ddd;border-radius:6px;">
+            <option value="">본부 선택</option>
+          </select>
+          <button onclick="hrCopyEmailTemplate()"
+            style="padding:7px 16px;background:#534AB7;color:#fff;border:none;border-radius:6px;cursor:pointer;font-size:13px;">
+            📋 이메일 본문 복사
+          </button>
+          <span id="hr-email-tmpl-feedback" style="font-size:12px;color:#0F6E56;"></span>
+        </div>
+        <div style="background:#f5f5f3;border-radius:8px;padding:12px 14px;">
+          <div style="font-size:11px;color:#888;margin-bottom:6px;">미리보기</div>
+          <pre id="hr-email-tmpl-preview" style="font-size:11px;color:#555;white-space:pre-wrap;margin:0;line-height:1.7;font-family:inherit;">본부를 선택하면 이메일 본문이 표시됩니다.</pre>
+        </div>
+      </div>
+      <p style="font-size:13px;color:#555;margin-bottom:1rem;">본부별 접속 URL — 🔗 URL 복사 후 이메일에 붙여넣기</p>
+      <div id="hr-codes-list"></div>
+    </div>
+
+    <!-- 결과 취합 -->
+    <div id="hr-collect" class="page">
+      <h2>결과 취합</h2>
+      <div class="info-note">본부장이 결과 제출 후 전달한 URL을 클릭하면 자동 등록됩니다. 또는 아래에 결과 코드를 직접 입력하세요.</div>
+
+      <!-- 코드 직접 입력 -->
+      <div class="card">
+        <h3>결과 코드 직접 입력</h3>
+        <div style="display:flex;gap:8px;align-items:flex-start;">
+          <textarea id="hr-collect-code" placeholder="본부장이 제출한 결과 코드를 붙여넣으세요" rows="3"
+            style="flex:1;font-size:11px;font-family:monospace;resize:vertical;padding:6px;border:1px solid #ddd;border-radius:6px;"></textarea>
+          <button onclick="hrCollectAdd()"
+            style="padding:8px 16px;background:#534AB7;color:#fff;border:none;border-radius:6px;cursor:pointer;font-size:13px;white-space:nowrap;align-self:flex-end;">
+            ＋ 등록
+          </button>
+        </div>
+        <div style="font-size:11px;color:#aaa;margin-top:6px;">본부명은 코드에서 자동 인식됩니다</div>
+        <div id="hr-collect-feedback" style="margin-top:8px;"></div>
+      </div>
+      <!-- 제출 현황 -->
+      <div class="card">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;">
+          <h3 style="margin:0;">제출 현황 <span id="hr-collect-count" style="font-size:13px;font-weight:400;color:#888;"></span></h3>
+          <button onclick="hrCollectClear()"
+            style="font-size:11px;padding:4px 10px;border:1px solid #ddd;border-radius:6px;background:#fff;cursor:pointer;color:#888;">전체 초기화</button>
+        </div>
+        <div id="hr-collect-status" style="margin-bottom:16px;"></div>
+        <div id="hr-collect-list"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- 본부장 앱 -->
+<div id="dept-app" class="hidden">
+  <div class="app-header">
+    <span class="app-logo">평가 T/O 시뮬레이터</span>
+    <span class="app-badge badge-dept" id="dept-app-badge">본부장</span>
+    <div class="header-right">
+      <button onclick="dSubmitResult()" style="background:#1D9E75;color:#fff;border:none;border-radius:6px;padding:6px 14px;font-size:13px;font-weight:500;cursor:pointer;margin-right:8px;">📤 결과 제출</button>
+      <button class="exit-btn" onclick="exitToEntry()">나가기</button>
+    </div>
+  </div>
+  <div class="tab-bar">
+    <button class="tab-btn active" onclick="deptTab('dept-to',this)">T/O 조정</button>
+    <button class="tab-btn" onclick="deptTab('dept-result',this)">보상 예측</button>
+  </div>
+  <div class="page-content">
+    <div id="dept-to" class="page active">
+      <div class="lock-banner">
+        <span style="font-size:14px;">🔒</span>
+        <span>기준 T/O 비율과 보상 재원은 HR 설정값입니다. 등급별 인원 배분만 조정할 수 있습니다.</span>
+      </div>
+
+      <!-- 기준 T/O 참조 패널 -->
+      <div class="card" style="margin-bottom:1.25rem;">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">
+          <div style="font-size:13px;font-weight:500;">기준 T/O 배분</div>
+          <div id="d-org-grade-badge" style="font-size:12px;"></div>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px;">
+          <!-- B이하 기준 -->
+          <div style="border:1.5px solid rgba(99,56,6,0.4);border-radius:8px;padding:10px;background:rgba(99,56,6,0.03);">
+            <div style="font-size:11px;font-weight:600;color:#633806;margin-bottom:8px;">B이하 기준 <span style="font-size:10px;font-weight:400;background:#633806;color:#fff;border-radius:4px;padding:1px 6px;margin-left:4px;">초기 배포값</span></div>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
+              <div>
+                <div style="font-size:10px;color:#888;margin-bottom:4px;">팀장</div>
+                <table style="font-size:11px;width:100%;" id="d-baseline-mgr-table-b"></table>
+              </div>
+              <div>
+                <div style="font-size:10px;color:#888;margin-bottom:4px;">팀원</div>
+                <table style="font-size:11px;width:100%;" id="d-baseline-mem-table-b"></table>
+              </div>
+            </div>
+          </div>
+          <!-- 현재 조직등급 기준 -->
+          <div style="border:1px solid rgba(83,74,183,0.2);border-radius:8px;padding:10px;background:rgba(83,74,183,0.02);">
+            <div style="font-size:11px;font-weight:600;color:#534AB7;margin-bottom:8px;" id="d-og-label">현재 조직등급 기준 <span style="font-size:10px;font-weight:400;color:#888;">(참고)</span></div>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
+              <div>
+                <div style="font-size:10px;color:#888;margin-bottom:4px;">팀장</div>
+                <table style="font-size:11px;width:100%;" id="d-baseline-mgr-table"></table>
+              </div>
+              <div>
+                <div style="font-size:10px;color:#888;margin-bottom:4px;">팀원</div>
+                <table style="font-size:11px;width:100%;" id="d-baseline-mem-table"></table>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:1rem;">
+        <div class="metric-card"><div class="metric-label">현재 예상 재원</div><div class="metric-value" id="d-cur-budget">-</div><div class="metric-sub" id="d-cur-budget-sub"></div></div>
+        <div class="metric-card"><div class="metric-label">재원 한도</div><div class="metric-value" id="d-tolerance-range" style="font-size:20px;padding-top:3px;">-</div><div class="metric-sub">초과 불가 기준</div></div>
+      </div>
+      <div style="margin-bottom:1.5rem;">
+        <div class="card-title">재원 사용률</div>
+        <div style="position:relative;">
+          <div class="budget-bar-wrap"><div class="budget-bar-fill" id="d-budget-bar" style="width:50%;background:#1D9E75;"></div></div>
+          <!-- 중앙 기준선 (재원 한도) -->
+          <div style="position:absolute;top:0;left:50%;width:2px;height:100%;background:#534AB7;opacity:0.6;"></div>
+        </div>
+        <div style="display:flex;justify-content:space-between;font-size:11px;color:#888;margin-top:4px;">
+          <span id="d-bar-min">0</span>
+          <span style="color:#534AB7;font-weight:500;">한도 <span id="d-bar-cur">-</span></span>
+          <span id="d-bar-max">한도 초과</span>
+        </div>
+      </div>
+      <div class="dept-to-layout">
+        <div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;">
+            <div>
+              <div class="card-title">팀장 T/O</div>
+              <div id="d-mgr-sliders"></div>
+              <div id="d-mgr-status"></div>
+            </div>
+            <div>
+              <div class="card-title">팀원 T/O</div>
+              <div id="d-mem-sliders"></div>
+              <div id="d-mem-status"></div>
+            </div>
+          </div>
+          <!-- 교환 실행 버튼 -->
+          <div style="margin-top:14px;border-top:1px solid rgba(0,0,0,0.07);padding-top:12px;">
+            <div style="font-size:12px;font-weight:500;color:#534AB7;margin-bottom:8px;">교환 규칙에 따른 조정</div>
+            <div id="d-swap-buttons-mgr" style="margin-bottom:8px;"></div>
+            <div id="d-swap-buttons-mem"></div>
+          </div>
+        </div>
+        <div class="guide-panel">
+          <div style="font-size:13px;font-weight:500;margin-bottom:10px;">재원 중립 교환 가이드</div>
+          <div class="gstab-bar">
+            <button class="gstab on" onclick="gsTab('gs-ratio',this)">교환 비율표</button>
+            <button class="gstab" onclick="gsTab('gs-sim',this)">교환 시뮬</button>
+            <button class="gstab" onclick="gsTab('gs-suggest',this)">조정 제안</button>
+          </div>
+          <div id="gs-ratio" class="gpanel on">
+            <div style="font-size:11px;color:#534AB7;font-weight:500;margin-bottom:8px;">HR 설정 등급간 교환 규칙</div>
+            <div style="font-size:10px;color:#888;margin-bottom:10px;">상위등급 1명 하향 시 → 하위등급에서 해당 등급으로 N명 상향 가능</div>
+            <div style="font-size:11px;font-weight:500;color:#555;margin-bottom:4px;">팀장 교환 규칙</div>
+            <div id="gs-matrix-mgr-rules" style="margin-bottom:12px;"></div>
+            <div style="font-size:11px;font-weight:500;color:#555;margin-bottom:4px;">팀원 교환 규칙</div>
+            <div id="gs-matrix-mem-rules" style="margin-bottom:10px;"></div>
+            <div id="gs-lv-note" style="display:none;margin-top:8px;background:#FAEEDA;color:#633806;border-radius:6px;padding:6px 10px;font-size:11px;">
+              L3 ↔ L1·L2 재원 교환이 제한되어 있습니다. 팀원 내 조정 시 L3/L1·L2 비율을 유지하세요.
+            </div>
+          </div>
+          <div id="gs-sim" class="gpanel">
+            <div style="font-size:11px;color:#888;margin-bottom:10px;">원하는 교환 조합의 재원 영향을 확인하세요</div>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px;">
+              <div><div style="font-size:11px;font-weight:500;color:#555;margin-bottom:6px;">하향 (줄이기)</div><div id="gs-sim-down"></div></div>
+              <div><div style="font-size:11px;font-weight:500;color:#555;margin-bottom:6px;">상향 (늘리기)</div><div id="gs-sim-up"></div></div>
+            </div>
+            <div id="gs-sim-result"></div>
+          </div>
+          <div id="gs-suggest" class="gpanel">
+            <div style="font-size:11px;color:#888;margin-bottom:10px;">현재 재원 상태를 중립으로 만드는 조정 방법</div>
+            <div id="gs-suggest-list"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div id="dept-result" class="page">
+      <h2>보상 예측</h2>
+      <div class="info-note" id="d-result-lv-note"></div>
+      <div class="card" style="overflow-x:auto;">
+        <table>
+          <thead><tr><th>등급</th><th>팀장 인원</th><th>팀원 인원</th><th>성과급(만원)</th><th>연봉인상(만원)</th><th>소계(만원)</th></tr></thead>
+          <tbody id="d-result-tbody"></tbody>
+        </table>
+      </div>
+      <div class="metric-row col4">
+        <div class="metric-card"><div class="metric-label">성과급 소계</div><div class="metric-value" id="d-r-bonus">-</div></div>
+        <div class="metric-card"><div class="metric-label">연봉인상 소계</div><div class="metric-value" id="d-r-salary">-</div></div>
+        <div class="metric-card"><div class="metric-label">보상 합계</div><div class="metric-value" id="d-r-total">-</div></div>
+        <div class="metric-card"><div class="metric-label">기준 대비</div><div class="metric-value" id="d-r-delta">-</div></div>
+      </div>
+      <h3>개인 보상 예시 (4등급 기준)</h3>
+      <div class="card" style="overflow-x:auto;">
+        <table>
+          <thead>
+            <tr>
+              <th rowspan="2" style="vertical-align:bottom;">구분</th>
+              <th rowspan="2" style="vertical-align:bottom;">기준급여</th>
+              <th rowspan="2" style="vertical-align:bottom;">성과급</th>
+              <th colspan="3" style="text-align:center;border-bottom:0.5px solid rgba(0,0,0,0.1);">연봉인상</th>
+              <th rowspan="2" style="vertical-align:bottom;">보상 합계</th>
+            </tr>
+            <tr>
+              <th style="color:#555;">Base-up</th>
+              <th style="color:#555;">성과인상</th>
+              <th style="color:#555;background:rgba(0,0,0,0.03);">소계</th>
+            </tr>
+          </thead>
+          <tbody id="d-person-tbody"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+/*__DEPT_PRESET__*/
+// 본부장용 파일로 열렸을 때 preset 자동 감지
+window.addEventListener('DOMContentLoaded',function(){
+  // __DEPT_PRESET__이 있을 때만 HR 버튼 숨김 (본부장 전용 파일)
+  if(window.__DEPT_PRESET__&&!window.__HR_PRESET__){
+    const hrBtn=document.getElementById('hr-mode-btn');
+    if(hrBtn) hrBtn.style.display='none';
+    const sub=document.querySelector('.entry-sub');
+    if(sub) sub.textContent='본부장 버튼을 클릭하여 시작하세요';
+  }
+
+  setTimeout(function(){
+    const params=new URLSearchParams(window.location.search);
+
+    // ?c=본부코드 → 본부장 자동 진입
+    // ?c=본부코드&r=결과코드 → HR 결과 취합 자동 등록
+    const code=params.get('c');
+    const rCode=params.get('r');
+
+    if(rCode){
+      // HR 결과 취합 모드
+      try{
+        const rCfg=fromDeptCode(rCode);
+        if(rCfg&&rCfg.dept){
+          hrCollectLoad();
+          const to=rCfg.to||rCfg.toBaseline;
+          const toBaseline=rCfg.toBaseline||rCfg.to;
+          hrCollectResults[rCfg.dept.name]={
+            dept:rCfg.dept, to, toBaseline,
+            baseFund:rCfg.baseFund,
+            submittedAt:new Date().toLocaleString('ko-KR')
+          };
+          try{ localStorage.setItem('hr_collect_results',JSON.stringify(hrCollectResults)); }catch(e){}
+          launchHR();
+          setTimeout(()=>{
+            const btn=document.querySelector('.tab-btn[onclick*="hr-collect"]');
+            if(btn) btn.click();
+            dShowToastSuccess('✓ '+rCfg.dept.name+' 결과가 등록되었습니다.');
+          },300);
+          return;
+        }
+      }catch(e){}
+    }
+
+    if(code){
+      // 본부장 진입 모드
+      try{
+        const cfg=fromDeptCode(code);
+        if(cfg&&cfg.dept){ launchDept(cfg); return; }
+      }catch(e){}
+    }
+
+    // DEPT_PRESET 있으면 자동 진입
+    if(window.__DEPT_PRESET__){
+      try{ launchDept(window.__DEPT_PRESET__); }catch(e){}
+    }
+  }, 300);
+});
+const HR_PW='hr1234', BASE_GRADE=3;
+const GL=['1등급','2등급','3등급','4등급','5등급','6등급'];
+const GC=['g1','g2','g3','g4','g5','g6'];
+const BAR_COLORS=['#534AB7','#185FA5','#639922','#BA7517','#993C1D','#A32D2D'];
+// 조직등급별 T/O 비율 (hrRenderGrades 표시용)
+const TO_RATIO = {
+  mgr: {
+    S: [0.25,0.35,0.20,0.20,null,null],
+    A: [0.20,0.30,0.25,0.25,null,null],
+    B: [0.15,0.30,0.25,0.30,null,null],
+  },
+  mem: {
+    S: [0.20,0.30,0.25,0.25,null,null],
+    A: [0.15,0.25,0.25,0.30,0.05,null],
+    B: [0.10,0.25,0.25,0.30,0.10,null],
+  }
+};
+const DEF_MGR_R=TO_RATIO.mgr.B;
+const DEF_MEM_R=TO_RATIO.mem.B;
+
+// TO 배분 룩업 테이블 (엑셀 TO_6등급_배분표 기준, 인원수 → [1~6등급 인원])
+const TO_TABLE={mgr:{S:{2:[1,1,0,0,0,0],3:[1,1,1,0,0,0],4:[1,1,1,1,0,0],5:[1,2,1,1,0,0],6:[2,2,1,1,0,0],7:[2,3,1,1,0,0],8:[2,3,2,1,0,0],9:[2,3,2,2,0,0],10:[3,3,2,2,0,0],11:[3,4,2,2,0,0],12:[3,4,3,2,0,0],13:[3,4,3,3,0,0],14:[3,5,3,3,0,0],15:[4,5,3,3,0,0],16:[4,6,3,3,0,0],17:[4,6,4,3,0,0],18:[4,6,4,4,0,0],19:[5,6,4,4,0,0],20:[5,7,4,4,0,0],21:[5,8,4,4,0,0],22:[6,8,4,4,0,0],23:[6,8,5,4,0,0],24:[6,8,5,5,0,0],25:[6,9,5,5,0,0],26:[7,9,5,5,0,0],27:[7,10,5,5,0,0],28:[7,10,6,5,0,0],29:[7,10,6,6,0,0],30:[8,10,6,6,0,0],31:[8,11,6,6,0,0],32:[8,11,7,6,0,0],33:[8,11,7,7,0,0],34:[8,12,7,7,0,0],35:[9,12,7,7,0,0],36:[9,13,7,7,0,0],37:[9,13,8,7,0,0],38:[9,13,8,8,0,0],39:[10,13,8,8,0,0],40:[10,14,8,8,0,0],41:[10,15,8,8,0,0],42:[11,15,8,8,0,0],43:[11,15,9,8,0,0],44:[11,15,9,9,0,0],45:[11,16,9,9,0,0],46:[12,16,9,9,0,0],47:[12,17,9,9,0,0],48:[12,17,10,9,0,0],49:[12,17,10,10,0,0],50:[13,17,10,10,0,0],51:[13,18,10,10,0,0],52:[13,18,11,10,0,0],53:[13,18,11,11,0,0],54:[13,19,11,11,0,0],55:[14,19,11,11,0,0],56:[14,20,11,11,0,0],57:[14,20,12,11,0,0],58:[14,20,12,12,0,0],59:[15,20,12,12,0,0],60:[15,21,12,12,0,0],61:[15,22,12,12,0,0],62:[16,22,12,12,0,0],63:[16,22,13,12,0,0],64:[16,22,13,13,0,0],65:[16,23,13,13,0,0],66:[17,23,13,13,0,0],67:[17,24,13,13,0,0],68:[17,24,14,13,0,0],69:[17,24,14,14,0,0],70:[18,24,14,14,0,0],71:[18,25,14,14,0,0],72:[18,25,15,14,0,0],73:[18,25,15,15,0,0],74:[18,26,15,15,0,0],75:[19,26,15,15,0,0],76:[19,27,15,15,0,0],77:[19,27,16,15,0,0],78:[19,27,16,16,0,0],79:[20,27,16,16,0,0],80:[20,28,16,16,0,0],81:[20,29,16,16,0,0],82:[21,29,16,16,0,0],83:[21,29,17,16,0,0],84:[21,29,17,17,0,0],85:[21,30,17,17,0,0],86:[22,30,17,17,0,0],87:[22,31,17,17,0,0],88:[22,31,18,17,0,0],89:[22,31,18,18,0,0],90:[23,31,18,18,0,0],91:[23,32,18,18,0,0],92:[23,32,19,18,0,0],93:[23,32,19,19,0,0],94:[23,33,19,19,0,0],95:[24,33,19,19,0,0],96:[24,34,19,19,0,0],97:[24,34,20,19,0,0],98:[24,34,20,20,0,0],99:[25,34,20,20,0,0],100:[25,35,20,20,0,0],101:[25,36,20,20,0,0],102:[26,36,20,20,0,0],103:[26,36,21,20,0,0],104:[26,36,21,21,0,0],105:[26,37,21,21,0,0],106:[27,37,21,21,0,0],107:[27,38,21,21,0,0],108:[27,38,22,21,0,0],109:[27,38,22,22,0,0],110:[28,38,22,22,0,0],111:[28,39,22,22,0,0],112:[28,39,23,22,0,0],113:[28,39,23,23,0,0],114:[28,40,23,23,0,0],115:[29,40,23,23,0,0],116:[29,41,23,23,0,0],117:[29,41,24,23,0,0],118:[29,41,24,24,0,0],119:[30,41,24,24,0,0],120:[30,42,24,24,0,0],121:[30,43,24,24,0,0],122:[31,43,24,24,0,0],123:[31,43,25,24,0,0],124:[31,43,25,25,0,0],125:[31,44,25,25,0,0],126:[32,44,25,25,0,0],127:[32,45,25,25,0,0],128:[32,45,26,25,0,0],129:[32,45,26,26,0,0],130:[33,45,26,26,0,0],131:[33,46,26,26,0,0],132:[33,46,27,26,0,0],133:[33,46,27,27,0,0],134:[33,47,27,27,0,0],135:[34,47,27,27,0,0],136:[34,48,27,27,0,0],137:[34,48,28,27,0,0],138:[34,48,28,28,0,0],139:[35,48,28,28,0,0],140:[35,49,28,28,0,0],141:[35,50,28,28,0,0],142:[36,50,28,28,0,0],143:[36,50,29,28,0,0],144:[36,50,29,29,0,0],145:[36,51,29,29,0,0],146:[37,51,29,29,0,0],147:[37,52,29,29,0,0],148:[37,52,30,29,0,0],149:[37,52,30,30,0,0],150:[38,52,30,30,0,0]},A:{2:[0,1,1,0,0,0],3:[0,1,1,1,0,0],4:[1,1,1,1,0,0],5:[1,2,1,1,0,0],6:[1,2,2,1,0,0],7:[1,2,2,2,0,0],8:[2,2,2,2,0,0],9:[2,3,2,2,0,0],10:[2,3,3,2,0,0],11:[2,3,3,3,0,0],12:[2,4,3,3,0,0],13:[3,4,3,3,0,0],14:[3,4,4,3,0,0],15:[3,4,4,4,0,0],16:[3,5,4,4,0,0],17:[4,5,4,4,0,0],18:[4,5,5,4,0,0],19:[4,5,5,5,0,0],20:[4,6,5,5,0,0],21:[4,7,5,5,0,0],22:[4,7,6,5,0,0],23:[4,7,6,6,0,0],24:[5,7,6,6,0,0],25:[5,8,6,6,0,0],26:[5,8,7,6,0,0],27:[5,8,7,7,0,0],28:[6,8,7,7,0,0],29:[6,9,7,7,0,0],30:[6,9,8,7,0,0],31:[6,9,8,8,0,0],32:[6,10,8,8,0,0],33:[7,10,8,8,0,0],34:[7,10,9,8,0,0],35:[7,10,9,9,0,0],36:[7,11,9,9,0,0],37:[8,11,9,9,0,0],38:[8,11,10,9,0,0],39:[8,11,10,10,0,0],40:[8,12,10,10,0,0],41:[8,13,10,10,0,0],42:[8,13,11,10,0,0],43:[8,13,11,11,0,0],44:[9,13,11,11,0,0],45:[9,14,11,11,0,0],46:[9,14,12,11,0,0],47:[9,14,12,12,0,0],48:[10,14,12,12,0,0],49:[10,15,12,12,0,0],50:[10,15,13,12,0,0],51:[10,15,13,13,0,0],52:[10,16,13,13,0,0],53:[11,16,13,13,0,0],54:[11,16,14,13,0,0],55:[11,16,14,14,0,0],56:[11,17,14,14,0,0],57:[12,17,14,14,0,0],58:[12,17,15,14,0,0],59:[12,17,15,15,0,0],60:[12,18,15,15,0,0],61:[12,19,15,15,0,0],62:[12,19,16,15,0,0],63:[12,19,16,16,0,0],64:[13,19,16,16,0,0],65:[13,20,16,16,0,0],66:[13,20,17,16,0,0],67:[13,20,17,17,0,0],68:[14,20,17,17,0,0],69:[14,21,17,17,0,0],70:[14,21,18,17,0,0],71:[14,21,18,18,0,0],72:[14,22,18,18,0,0],73:[15,22,18,18,0,0],74:[15,22,19,18,0,0],75:[15,22,19,19,0,0],76:[15,23,19,19,0,0],77:[16,23,19,19,0,0],78:[16,23,20,19,0,0],79:[16,23,20,20,0,0],80:[16,24,20,20,0,0],81:[16,25,20,20,0,0],82:[16,25,21,20,0,0],83:[16,25,21,21,0,0],84:[17,25,21,21,0,0],85:[17,26,21,21,0,0],86:[17,26,22,21,0,0],87:[17,26,22,22,0,0],88:[18,26,22,22,0,0],89:[18,27,22,22,0,0],90:[18,27,23,22,0,0],91:[18,27,23,23,0,0],92:[18,28,23,23,0,0],93:[19,28,23,23,0,0],94:[19,28,24,23,0,0],95:[19,28,24,24,0,0],96:[19,29,24,24,0,0],97:[20,29,24,24,0,0],98:[20,29,25,24,0,0],99:[20,29,25,25,0,0],100:[20,30,25,25,0,0],101:[20,31,25,25,0,0],102:[20,31,26,25,0,0],103:[20,31,26,26,0,0],104:[21,31,26,26,0,0],105:[21,32,26,26,0,0],106:[21,32,27,26,0,0],107:[21,32,27,27,0,0],108:[22,32,27,27,0,0],109:[22,33,27,27,0,0],110:[22,33,28,27,0,0],111:[22,33,28,28,0,0],112:[22,34,28,28,0,0],113:[23,34,28,28,0,0],114:[23,34,29,28,0,0],115:[23,34,29,29,0,0],116:[23,35,29,29,0,0],117:[24,35,29,29,0,0],118:[24,35,30,29,0,0],119:[24,35,30,30,0,0],120:[24,36,30,30,0,0],121:[24,37,30,30,0,0],122:[24,37,31,30,0,0],123:[24,37,31,31,0,0],124:[25,37,31,31,0,0],125:[25,38,31,31,0,0],126:[25,38,32,31,0,0],127:[25,38,32,32,0,0],128:[26,38,32,32,0,0],129:[26,39,32,32,0,0],130:[26,39,33,32,0,0],131:[26,39,33,33,0,0],132:[26,40,33,33,0,0],133:[27,40,33,33,0,0],134:[27,40,34,33,0,0],135:[27,40,34,34,0,0],136:[27,41,34,34,0,0],137:[28,41,34,34,0,0],138:[28,41,35,34,0,0],139:[28,41,35,35,0,0],140:[28,42,35,35,0,0],141:[28,43,35,35,0,0],142:[28,43,36,35,0,0],143:[28,43,36,36,0,0],144:[29,43,36,36,0,0],145:[29,44,36,36,0,0],146:[29,44,37,36,0,0],147:[29,44,37,37,0,0],148:[30,44,37,37,0,0],149:[30,45,37,37,0,0],150:[30,45,38,37,0,0]},B:{2:[0,1,0,1,0,0],3:[0,1,1,1,0,0],4:[1,1,1,1,0,0],5:[1,2,1,1,0,0],6:[1,2,1,2,0,0],7:[1,2,2,2,0,0],8:[1,3,2,2,0,0],9:[1,3,2,3,0,0],10:[2,3,2,3,0,0],11:[2,3,3,3,0,0],12:[2,4,3,3,0,0],13:[2,4,3,4,0,0],14:[2,4,4,4,0,0],15:[2,5,4,4,0,0],16:[2,5,4,5,0,0],17:[3,5,4,5,0,0],18:[3,5,5,5,0,0],19:[3,6,5,5,0,0],20:[3,6,5,6,0,0],21:[3,7,5,6,0,0],22:[3,7,5,7,0,0],23:[3,7,6,7,0,0],24:[4,7,6,7,0,0],25:[4,8,6,7,0,0],26:[4,8,6,8,0,0],27:[4,8,7,8,0,0],28:[4,9,7,8,0,0],29:[4,9,7,9,0,0],30:[5,9,7,9,0,0],31:[5,9,8,9,0,0],32:[5,10,8,9,0,0],33:[5,10,8,10,0,0],34:[5,10,9,10,0,0],35:[5,11,9,10,0,0],36:[5,11,9,11,0,0],37:[6,11,9,11,0,0],38:[6,11,10,11,0,0],39:[6,12,10,11,0,0],40:[6,12,10,12,0,0],41:[6,13,10,12,0,0],42:[6,13,10,13,0,0],43:[6,13,11,13,0,0],44:[7,13,11,13,0,0],45:[7,14,11,13,0,0],46:[7,14,11,14,0,0],47:[7,14,12,14,0,0],48:[7,15,12,14,0,0],49:[7,15,12,15,0,0],50:[8,15,12,15,0,0],51:[8,15,13,15,0,0],52:[8,16,13,15,0,0],53:[8,16,13,16,0,0],54:[8,16,14,16,0,0],55:[8,17,14,16,0,0],56:[8,17,14,17,0,0],57:[9,17,14,17,0,0],58:[9,17,15,17,0,0],59:[9,18,15,17,0,0],60:[9,18,15,18,0,0],61:[9,19,15,18,0,0],62:[9,19,15,19,0,0],63:[9,19,16,19,0,0],64:[10,19,16,19,0,0],65:[10,20,16,19,0,0],66:[10,20,16,20,0,0],67:[10,20,17,20,0,0],68:[10,21,17,20,0,0],69:[10,21,17,21,0,0],70:[11,21,17,21,0,0],71:[11,21,18,21,0,0],72:[11,22,18,21,0,0],73:[11,22,18,22,0,0],74:[11,22,19,22,0,0],75:[11,23,19,22,0,0],76:[11,23,19,23,0,0],77:[12,23,19,23,0,0],78:[12,23,20,23,0,0],79:[12,24,20,23,0,0],80:[12,24,20,24,0,0],81:[12,25,20,24,0,0],82:[12,25,20,25,0,0],83:[12,25,21,25,0,0],84:[13,25,21,25,0,0],85:[13,26,21,25,0,0],86:[13,26,21,26,0,0],87:[13,26,22,26,0,0],88:[13,27,22,26,0,0],89:[13,27,22,27,0,0],90:[14,27,22,27,0,0],91:[14,27,23,27,0,0],92:[14,28,23,27,0,0],93:[14,28,23,28,0,0],94:[14,28,24,28,0,0],95:[14,29,24,28,0,0],96:[14,29,24,29,0,0],97:[15,29,24,29,0,0],98:[15,29,25,29,0,0],99:[15,30,25,29,0,0],100:[15,30,25,30,0,0],101:[15,31,25,30,0,0],102:[15,31,25,31,0,0],103:[15,31,26,31,0,0],104:[16,31,26,31,0,0],105:[16,32,26,31,0,0],106:[16,32,26,32,0,0],107:[16,32,27,32,0,0],108:[16,33,27,32,0,0],109:[16,33,27,33,0,0],110:[17,33,27,33,0,0],111:[17,33,28,33,0,0],112:[17,34,28,33,0,0],113:[17,34,28,34,0,0],114:[17,34,29,34,0,0],115:[17,35,29,34,0,0],116:[17,35,29,35,0,0],117:[18,35,29,35,0,0],118:[18,35,30,35,0,0],119:[18,36,30,35,0,0],120:[18,36,30,36,0,0],121:[18,37,30,36,0,0],122:[18,37,30,37,0,0],123:[18,37,31,37,0,0],124:[19,37,31,37,0,0],125:[19,38,31,37,0,0],126:[19,38,31,38,0,0],127:[19,38,32,38,0,0],128:[19,39,32,38,0,0],129:[19,39,32,39,0,0],130:[20,39,32,39,0,0],131:[20,39,33,39,0,0],132:[20,40,33,39,0,0],133:[20,40,33,40,0,0],134:[20,40,34,40,0,0],135:[20,41,34,40,0,0],136:[20,41,34,41,0,0],137:[21,41,34,41,0,0],138:[21,41,35,41,0,0],139:[21,42,35,41,0,0],140:[21,42,35,42,0,0],141:[21,43,35,42,0,0],142:[21,43,35,43,0,0],143:[21,43,36,43,0,0],144:[22,43,36,43,0,0],145:[22,44,36,43,0,0],146:[22,44,36,44,0,0],147:[22,44,37,44,0,0],148:[22,45,37,44,0,0],149:[22,45,37,45,0,0],150:[23,45,37,45,0,0]}},mem:{S:{2:[0,1,1,0,0,0],3:[0,1,1,1,0,0],4:[1,1,1,1,0,0],5:[1,2,1,1,0,0],6:[1,2,2,1,0,0],7:[1,2,2,2,0,0],8:[2,2,2,2,0,0],9:[2,3,2,2,0,0],10:[2,3,3,2,0,0],11:[2,3,3,3,0,0],12:[2,4,3,3,0,0],13:[3,4,3,3,0,0],14:[3,4,4,3,0,0],15:[3,4,4,4,0,0],16:[3,5,4,4,0,0],17:[4,5,4,4,0,0],18:[4,5,5,4,0,0],19:[4,5,5,5,0,0],20:[4,6,5,5,0,0],21:[4,7,5,5,0,0],22:[4,7,6,5,0,0],23:[4,7,6,6,0,0],24:[5,7,6,6,0,0],25:[5,8,6,6,0,0],26:[5,8,7,6,0,0],27:[5,8,7,7,0,0],28:[6,8,7,7,0,0],29:[6,9,7,7,0,0],30:[6,9,8,7,0,0],31:[6,9,8,8,0,0],32:[6,10,8,8,0,0],33:[7,10,8,8,0,0],34:[7,10,9,8,0,0],35:[7,10,9,9,0,0],36:[7,11,9,9,0,0],37:[8,11,9,9,0,0],38:[8,11,10,9,0,0],39:[8,11,10,10,0,0],40:[8,12,10,10,0,0],41:[8,13,10,10,0,0],42:[8,13,11,10,0,0],43:[8,13,11,11,0,0],44:[9,13,11,11,0,0],45:[9,14,11,11,0,0],46:[9,14,12,11,0,0],47:[9,14,12,12,0,0],48:[10,14,12,12,0,0],49:[10,15,12,12,0,0],50:[10,15,13,12,0,0],51:[10,15,13,13,0,0],52:[10,16,13,13,0,0],53:[11,16,13,13,0,0],54:[11,16,14,13,0,0],55:[11,16,14,14,0,0],56:[11,17,14,14,0,0],57:[12,17,14,14,0,0],58:[12,17,15,14,0,0],59:[12,17,15,15,0,0],60:[12,18,15,15,0,0],61:[12,19,15,15,0,0],62:[12,19,16,15,0,0],63:[12,19,16,16,0,0],64:[13,19,16,16,0,0],65:[13,20,16,16,0,0],66:[13,20,17,16,0,0],67:[13,20,17,17,0,0],68:[14,20,17,17,0,0],69:[14,21,17,17,0,0],70:[14,21,18,17,0,0],71:[14,21,18,18,0,0],72:[14,22,18,18,0,0],73:[15,22,18,18,0,0],74:[15,22,19,18,0,0],75:[15,22,19,19,0,0],76:[15,23,19,19,0,0],77:[16,23,19,19,0,0],78:[16,23,20,19,0,0],79:[16,23,20,20,0,0],80:[16,24,20,20,0,0],81:[16,25,20,20,0,0],82:[16,25,21,20,0,0],83:[16,25,21,21,0,0],84:[17,25,21,21,0,0],85:[17,26,21,21,0,0],86:[17,26,22,21,0,0],87:[17,26,22,22,0,0],88:[18,26,22,22,0,0],89:[18,27,22,22,0,0],90:[18,27,23,22,0,0],91:[18,27,23,23,0,0],92:[18,28,23,23,0,0],93:[19,28,23,23,0,0],94:[19,28,24,23,0,0],95:[19,28,24,24,0,0],96:[19,29,24,24,0,0],97:[20,29,24,24,0,0],98:[20,29,25,24,0,0],99:[20,29,25,25,0,0],100:[20,30,25,25,0,0],101:[20,31,25,25,0,0],102:[20,31,26,25,0,0],103:[20,31,26,26,0,0],104:[21,31,26,26,0,0],105:[21,32,26,26,0,0],106:[21,32,27,26,0,0],107:[21,32,27,27,0,0],108:[22,32,27,27,0,0],109:[22,33,27,27,0,0],110:[22,33,28,27,0,0],111:[22,33,28,28,0,0],112:[22,34,28,28,0,0],113:[23,34,28,28,0,0],114:[23,34,29,28,0,0],115:[23,34,29,29,0,0],116:[23,35,29,29,0,0],117:[24,35,29,29,0,0],118:[24,35,30,29,0,0],119:[24,35,30,30,0,0],120:[24,36,30,30,0,0],121:[24,37,30,30,0,0],122:[24,37,31,30,0,0],123:[24,37,31,31,0,0],124:[25,37,31,31,0,0],125:[25,38,31,31,0,0],126:[25,38,32,31,0,0],127:[25,38,32,32,0,0],128:[26,38,32,32,0,0],129:[26,39,32,32,0,0],130:[26,39,33,32,0,0],131:[26,39,33,33,0,0],132:[26,40,33,33,0,0],133:[27,40,33,33,0,0],134:[27,40,34,33,0,0],135:[27,40,34,34,0,0],136:[27,41,34,34,0,0],137:[28,41,34,34,0,0],138:[28,41,35,34,0,0],139:[28,41,35,35,0,0],140:[28,42,35,35,0,0],141:[28,43,35,35,0,0],142:[28,43,36,35,0,0],143:[28,43,36,36,0,0],144:[29,43,36,36,0,0],145:[29,44,36,36,0,0],146:[29,44,37,36,0,0],147:[29,44,37,37,0,0],148:[30,44,37,37,0,0],149:[30,45,37,37,0,0],150:[30,45,38,37,0,0]},A:{2:[0,1,0,1,0,0],3:[0,1,1,1,0,0],4:[1,1,1,1,0,0],5:[1,1,1,2,0,0],6:[1,2,1,2,0,0],7:[1,2,2,2,0,0],8:[1,2,2,2,1,0],9:[1,2,2,3,1,0],10:[2,3,2,3,0,0],11:[2,3,3,3,0,0],12:[2,3,3,3,1,0],13:[2,3,3,4,1,0],14:[2,4,3,4,1,0],15:[2,4,4,4,1,0],16:[2,4,4,5,1,0],17:[3,4,4,5,1,0],18:[3,5,4,5,1,0],19:[3,5,5,5,1,0],20:[3,5,5,6,1,0],21:[3,5,5,7,1,0],22:[3,6,5,7,1,0],23:[3,6,6,7,1,0],24:[4,6,6,7,1,0],25:[4,6,6,8,1,0],26:[4,7,6,8,1,0],27:[4,7,7,8,1,0],28:[4,7,7,9,1,0],29:[4,7,7,9,2,0],30:[5,8,7,9,1,0],31:[5,8,8,9,1,0],32:[5,8,8,9,2,0],33:[5,8,8,10,2,0],34:[5,9,8,10,2,0],35:[5,9,9,10,2,0],36:[5,9,9,11,2,0],37:[6,9,9,11,2,0],38:[6,10,9,11,2,0],39:[6,10,10,11,2,0],40:[6,10,10,12,2,0],41:[6,10,10,13,2,0],42:[6,11,10,13,2,0],43:[6,11,11,13,2,0],44:[7,11,11,13,2,0],45:[7,11,11,14,2,0],46:[7,12,11,14,2,0],47:[7,12,12,14,2,0],48:[7,12,12,14,3,0],49:[7,12,12,15,3,0],50:[8,13,12,15,2,0],51:[8,13,13,15,2,0],52:[8,13,13,15,3,0],53:[8,13,13,16,3,0],54:[8,14,13,16,3,0],55:[8,14,14,16,3,0],56:[8,14,14,17,3,0],57:[9,14,14,17,3,0],58:[9,15,14,17,3,0],59:[9,15,15,17,3,0],60:[9,15,15,18,3,0],61:[9,15,15,19,3,0],62:[9,16,15,19,3,0],63:[9,16,16,19,3,0],64:[10,16,16,19,3,0],65:[10,16,16,20,3,0],66:[10,17,16,20,3,0],67:[10,17,17,20,3,0],68:[10,17,17,20,4,0],69:[10,17,17,21,4,0],70:[11,18,17,21,3,0],71:[11,18,18,21,3,0],72:[11,18,18,21,4,0],73:[11,18,18,22,4,0],74:[11,19,18,22,4,0],75:[11,19,19,22,4,0],76:[11,19,19,23,4,0],77:[12,19,19,23,4,0],78:[12,20,19,23,4,0],79:[12,20,20,23,4,0],80:[12,20,20,24,4,0],81:[12,20,20,25,4,0],82:[12,21,20,25,4,0],83:[12,21,21,25,4,0],84:[13,21,21,25,4,0],85:[13,21,21,26,4,0],86:[13,22,21,26,4,0],87:[13,22,22,26,4,0],88:[13,22,22,26,5,0],89:[13,22,22,27,5,0],90:[14,23,22,27,4,0],91:[14,23,23,27,4,0],92:[14,23,23,27,5,0],93:[14,23,23,28,5,0],94:[14,24,23,28,5,0],95:[14,24,24,28,5,0],96:[14,24,24,29,5,0],97:[15,24,24,29,5,0],98:[15,25,24,29,5,0],99:[15,25,25,29,5,0],100:[15,25,25,30,5,0],101:[15,25,25,31,5,0],102:[15,26,25,31,5,0],103:[15,26,26,31,5,0],104:[16,26,26,31,5,0],105:[16,26,26,32,5,0],106:[16,27,26,32,5,0],107:[16,27,27,32,5,0],108:[16,27,27,32,6,0],109:[16,27,27,33,6,0],110:[17,28,27,33,5,0],111:[17,28,28,33,5,0],112:[17,28,28,34,5,0],113:[17,28,28,34,6,0],114:[17,29,28,34,6,0],115:[17,29,29,34,6,0],116:[17,29,29,35,6,0],117:[18,29,29,35,6,0],118:[18,30,29,35,6,0],119:[18,30,30,35,6,0],120:[18,30,30,36,6,0],121:[18,30,30,37,6,0],122:[18,31,30,37,6,0],123:[18,31,31,37,6,0],124:[19,31,31,37,6,0],125:[19,31,31,38,6,0],126:[19,32,31,38,6,0],127:[19,32,32,38,6,0],128:[19,32,32,38,7,0],129:[19,32,32,39,7,0],130:[20,33,32,39,6,0],131:[20,33,33,39,6,0],132:[20,33,33,40,6,0],133:[20,33,33,40,7,0],134:[20,34,33,40,7,0],135:[20,34,34,40,7,0],136:[20,34,34,41,7,0],137:[21,34,34,41,7,0],138:[21,35,34,41,7,0],139:[21,35,35,41,7,0],140:[21,35,35,42,7,0],141:[21,35,35,43,7,0],142:[21,36,35,43,7,0],143:[21,36,36,43,7,0],144:[22,36,36,43,7,0],145:[22,36,36,44,7,0],146:[22,37,36,44,7,0],147:[22,37,37,44,7,0],148:[22,37,37,44,8,0],149:[22,37,37,45,8,0],150:[23,38,37,45,7,0]},B:{2:[0,1,0,1,0,0],3:[0,1,1,1,0,0],4:[1,1,1,1,0,0],5:[1,1,1,2,0,0],6:[1,1,1,2,1,0],7:[1,2,2,2,0,0],8:[1,2,2,2,1,0],9:[1,2,2,3,1,0],10:[1,3,2,3,1,0],11:[1,3,3,3,1,0],12:[1,3,3,4,1,0],13:[2,3,3,4,1,0],14:[1,4,4,4,1,0],15:[2,4,4,4,1,0],16:[2,4,4,5,1,0],17:[2,4,4,5,2,0],18:[2,5,4,5,2,0],19:[2,5,5,5,2,0],20:[2,5,5,6,2,0],21:[2,5,5,7,2,0],22:[2,6,5,7,2,0],23:[2,6,6,7,2,0],24:[3,6,6,7,2,0],25:[3,6,6,8,2,0],26:[3,6,6,8,3,0],27:[3,7,7,8,2,0],28:[3,7,7,8,3,0],29:[3,7,7,9,3,0],30:[3,8,7,9,3,0],31:[3,8,8,9,3,0],32:[3,8,8,10,3,0],33:[4,8,8,10,3,0],34:[3,9,9,10,3,0],35:[4,9,9,10,3,0],36:[4,9,9,11,3,0],37:[4,9,9,11,4,0],38:[4,10,9,11,4,0],39:[4,10,10,11,4,0],40:[4,10,10,12,4,0],41:[4,10,10,13,4,0],42:[4,11,10,13,4,0],43:[4,11,11,13,4,0],44:[5,11,11,13,4,0],45:[5,11,11,14,4,0],46:[5,11,11,14,5,0],47:[5,12,12,14,4,0],48:[5,12,12,14,5,0],49:[5,12,12,15,5,0],50:[5,13,12,15,5,0],51:[5,13,13,15,5,0],52:[5,13,13,16,5,0],53:[6,13,13,16,5,0],54:[5,14,14,16,5,0],55:[6,14,14,16,5,0],56:[6,14,14,17,5,0],57:[6,14,14,17,6,0],58:[6,15,14,17,6,0],59:[6,15,15,17,6,0],60:[6,15,15,18,6,0],61:[6,15,15,19,6,0],62:[6,16,15,19,6,0],63:[6,16,16,19,6,0],64:[7,16,16,19,6,0],65:[7,16,16,20,6,0],66:[7,16,16,20,7,0],67:[7,17,17,20,6,0],68:[7,17,17,20,7,0],69:[7,17,17,21,7,0],70:[7,18,17,21,7,0],71:[7,18,18,21,7,0],72:[7,18,18,22,7,0],73:[8,18,18,22,7,0],74:[7,19,19,22,7,0],75:[8,19,19,22,7,0],76:[8,19,19,23,7,0],77:[8,19,19,23,8,0],78:[8,20,19,23,8,0],79:[8,20,20,23,8,0],80:[8,20,20,24,8,0],81:[8,20,20,25,8,0],82:[8,21,20,25,8,0],83:[8,21,21,25,8,0],84:[9,21,21,25,8,0],85:[9,21,21,26,8,0],86:[9,21,21,26,9,0],87:[9,22,22,26,8,0],88:[9,22,22,26,9,0],89:[9,22,22,27,9,0],90:[9,23,22,27,9,0],91:[9,23,23,27,9,0],92:[9,23,23,28,9,0],93:[10,23,23,28,9,0],94:[9,24,24,28,9,0],95:[10,24,24,28,9,0],96:[10,24,24,29,9,0],97:[10,24,24,29,10,0],98:[10,25,24,29,10,0],99:[10,25,25,29,10,0],100:[10,25,25,30,10,0],101:[10,25,25,31,10,0],102:[10,26,25,31,10,0],103:[10,26,26,31,10,0],104:[11,26,26,31,10,0],105:[11,26,26,32,10,0],106:[11,26,26,32,11,0],107:[11,27,27,32,10,0],108:[11,27,27,32,11,0],109:[11,27,27,33,11,0],110:[11,28,27,33,11,0],111:[11,28,28,33,11,0],112:[11,28,28,34,11,0],113:[12,28,28,34,11,0],114:[11,29,29,34,11,0],115:[12,29,29,34,11,0],116:[12,29,29,35,11,0],117:[12,29,29,35,12,0],118:[12,30,29,35,12,0],119:[12,30,30,35,12,0],120:[12,30,30,36,12,0],121:[12,30,30,37,12,0],122:[12,31,30,37,12,0],123:[12,31,31,37,12,0],124:[13,31,31,37,12,0],125:[13,31,31,38,12,0],126:[13,31,31,38,13,0],127:[13,32,32,38,12,0],128:[13,32,32,38,13,0],129:[13,32,32,39,13,0],130:[13,33,32,39,13,0],131:[13,33,33,39,13,0],132:[13,33,33,40,13,0],133:[14,33,33,40,13,0],134:[13,34,34,40,13,0],135:[14,34,34,40,13,0],136:[14,34,34,41,13,0],137:[14,34,34,41,14,0],138:[14,35,34,41,14,0],139:[14,35,35,41,14,0],140:[14,35,35,42,14,0],141:[14,35,35,43,14,0],142:[14,36,35,43,14,0],143:[14,36,36,43,14,0],144:[15,36,36,43,14,0],145:[15,36,36,44,14,0],146:[15,36,36,44,15,0],147:[15,37,37,44,14,0],148:[15,37,37,44,15,0],149:[15,37,37,45,15,0],150:[15,38,37,45,15,0]}}};
+
+// TO 룩업: 인원수가 표에 없으면 최대잉여법 fallback
+function lookupTO(role, grade, n){
+  const tbl=TO_TABLE[role][grade];
+  if(tbl[n]) return [...tbl[n]];
+  // 150 초과 시 최대잉여법
+  return hamiltonAlloc(n, TO_RATIO[role][grade]);
+}
+
+// hrDepts: T/O용 팀장/팀원 + 보상용 L3/L12 기준급여
+// l3N/l12N은 선택입력(null이면 mgrN/memN 자동사용)
+let hrDepts=[
+  {name:'BX1본부',   mgrN:4,  memN:17,  mgrBase:800, l3Base:652, l12Base:434, l3N:14, l12N:7,  orgGrade:'B'},
+  {name:'BX2본부',   mgrN:4,  memN:14,  mgrBase:800, l3Base:672, l12Base:469, l3N:14, l12N:4,  orgGrade:'B'},
+  {name:'BX3본부',   mgrN:3,  memN:23,  mgrBase:800, l3Base:610, l12Base:471, l3N:15, l12N:11, orgGrade:'B'},
+  {name:'BX4본부',   mgrN:5,  memN:23,  mgrBase:800, l3Base:634, l12Base:459, l3N:20, l12N:8,  orgGrade:'B'},
+  {name:'BX5본부',   mgrN:6,  memN:28,  mgrBase:800, l3Base:652, l12Base:432, l3N:24, l12N:10, orgGrade:'B'},
+  {name:'CR1본부',   mgrN:4,  memN:20,  mgrBase:800, l3Base:674, l12Base:451, l3N:20, l12N:4,  orgGrade:'B'},
+  {name:'CR2본부',   mgrN:5,  memN:25,  mgrBase:800, l3Base:644, l12Base:455, l3N:28, l12N:2,  orgGrade:'B'},
+  {name:'CR3본부',   mgrN:4,  memN:22,  mgrBase:800, l3Base:636, l12Base:401, l3N:23, l12N:3,  orgGrade:'B'},
+  {name:'CR4본부',   mgrN:2,  memN:16,  mgrBase:800, l3Base:711, l12Base:441, l3N:11, l12N:7,  orgGrade:'B'},
+  {name:'CX본부',    mgrN:11, memN:113, mgrBase:800, l3Base:632, l12Base:422, l3N:80, l12N:44, orgGrade:'B'},
+  {name:'DX본부',    mgrN:8,  memN:94,  mgrBase:800, l3Base:639, l12Base:416, l3N:70, l12N:32, orgGrade:'B'},
+  {name:'MX본부',    mgrN:10, memN:63,  mgrBase:800, l3Base:687, l12Base:439, l3N:66, l12N:7,  orgGrade:'B'},
+  {name:'경영전략본부', mgrN:4,  memN:20,  mgrBase:800, l3Base:712, l12Base:512, l3N:22, l12N:2,  orgGrade:'B'},
+  {name:'경영지원본부', mgrN:6,  memN:44,  mgrBase:800, l3Base:700, l12Base:443, l3N:45, l12N:5,  orgGrade:'B'},
+  {name:'재경본부',   mgrN:5,  memN:38,  mgrBase:800, l3Base:677, l12Base:438, l3N:35, l12N:8,  orgGrade:'B'},
+  {name:'글비본부',   mgrN:13, memN:84,  mgrBase:800, l3Base:623, l12Base:430, l3N:62, l12N:35, orgGrade:'B'},
+  {name:'이노21본부',  mgrN:6,  memN:21,  mgrBase:800, l3Base:674, l12Base:423, l3N:20, l12N:7,  orgGrade:'B'},
+  {name:'인사이트전략', mgrN:4,  memN:25,  mgrBase:800, l3Base:648, l12Base:434, l3N:23, l12N:6,  orgGrade:'B'},
+];
+// 성과급: 1·2등급은 기준값+가산치, 3~6등급은 기준값×배수
+let bonusAdd =[1.0, 0.5, 0, 0, 0, 0];    // 1·2등급 가산치(소수), 3~6은 미사용
+let bonusMult=[0, 0, 0.9, 1.0, 0.7, 0.0]; // 3~6등급 배수, 1·2는 미사용
+let gradePerf  =[2.5, 1.8, 1.3, 1.0, 0.5, 0.0]; // L3 성과인상 배수
+let gradePerfL12=[2.5, 1.8, 1.3, 1.0, 0.5, 0.0]; // L1·L2 성과인상 배수
+let gradeBaseUp  =[1.0, 1.0, 1.0, 1.0, 1.0, 1.0]; // L3 base-up 배수
+let gradeBaseUpL12=[1.0, 1.0, 1.0, 1.0, 1.0, 1.0]; // L1·L2 base-up 배수
+// 등급별 급여 보정 배수 (1.0=평균, 고연봉자 상위등급 집중 리스크 반영용)
+let salaryMultMgr=[1.0, 1.0, 1.0, 1.0, 1.0, 1.0];
+let salaryMultL3 =[1.0, 1.0, 1.0, 1.0, 1.0, 1.0];
+let salaryMultL12=[1.0, 1.0, 1.0, 1.0, 1.0, 1.0];
+let bonusBaseRate=2.10;
+let baseUpL3=160, baseUpL12=130;
+let perfBaseL12=103;
+let perfBaseL3=120; // L3 독립 기준값
+let tolerancePct=3;
+let bufferPct=0;
+let confirmedFund=null; // 목표 재원 시뮬 적용 시점 재원 (본부장 한도로 사용)
+// 등급간 교환 matrix: [from][to] = 하향 1명당 상향 가능 인원 (null=교환불가)
+// 팀장: 4등급까지 상대평가, 팀원: 5등급까지 상대평가
+let swapMatrixMgr=[[null,2,3,null,null,null],[null,null,2,3,null,null],[null,null,null,2,null,null],[null,null,null,null,null,null],[null,null,null,null,null,null],[null,null,null,null,null,null]];
+let swapMatrixMem=[[null,2,3,4,null,null],[null,null,2,3,null,null],[null,null,null,2,null,null],[null,null,null,null,null,null],[null,null,null,null,null,null],[null,null,null,null,null,null]];
+let swapCross='allowed'; // 팀장↔팀원 교환 허용 여부
+let swapLv='allowed';    // 팀원 내 L3↔L1·L2 교환 허용 여부
+let dState={};
+
+// L3/L12 실제 인원 (null이면 mgrN/memN 사용)
+function getL3N(d){ return d.l3N!==null&&d.l3N!==''?+d.l3N:d.mgrN; }
+function getL12N(d){ return d.l12N!==null&&d.l12N!==''?+d.l12N:d.memN; }
+
+/* ── 진입 ── */
+function showPwOverlay(){document.getElementById('pw-overlay').classList.remove('hidden');document.getElementById('pw-input').focus();}
+function hidePwOverlay(){document.getElementById('pw-overlay').classList.add('hidden');document.getElementById('pw-input').value='';document.getElementById('pw-err').classList.add('hidden');}
+function checkPw(){if(document.getElementById('pw-input').value===HR_PW){hidePwOverlay();launchHR();}else document.getElementById('pw-err').classList.remove('hidden');}
+function showDeptEntry(){document.getElementById('dept-entry-area').classList.remove('hidden');document.getElementById('dept-code-input').focus();}
+function hideDeptEntry(){document.getElementById('dept-entry-area').classList.add('hidden');document.getElementById('dept-code-input').value='';document.getElementById('dept-code-err').classList.add('hidden');}
+function loadDeptCode(){
+  try{const cfg=fromDeptCode(document.getElementById('dept-code-input').value.trim());if(!cfg.dept||!cfg.toBaseline)throw 0;launchDept(cfg);}
+  catch(e){document.getElementById('dept-code-err').classList.remove('hidden');}
+}
+function exitToEntry(){document.getElementById('hr-app').classList.add('hidden');document.getElementById('dept-app').classList.add('hidden');document.getElementById('entry-screen').classList.remove('hidden');}
+
+/* ── HR ── */
+function hrRestoreSettings(){
+  // 인라인 preset이 있으면 우선 적용 (배포용 파일)
+  if(window.__HR_PRESET__){
+    const p=window.__HR_PRESET__;
+    try{
+      if(p.hrDepts&&Array.isArray(p.hrDepts)&&p.hrDepts.length>0) hrDepts=p.hrDepts;
+      if(p.bonusBaseRate!=null) bonusBaseRate=p.bonusBaseRate;
+      if(p.bonusAdd)     bonusAdd=p.bonusAdd;
+      if(p.bonusMult)    bonusMult=p.bonusMult;
+      if(p.gradePerf)       gradePerf=p.gradePerf;
+      if(p.gradePerfL12)    gradePerfL12=p.gradePerfL12;
+      if(p.gradeBaseUp)     gradeBaseUp=p.gradeBaseUp;
+      if(p.gradeBaseUpL12)  gradeBaseUpL12=p.gradeBaseUpL12;
+      if(p.salaryMultMgr)   salaryMultMgr=p.salaryMultMgr;
+      if(p.salaryMultL3)    salaryMultL3=p.salaryMultL3;
+      if(p.salaryMultL12)   salaryMultL12=p.salaryMultL12;
+      if(p.baseUpL3!=null)   baseUpL3=p.baseUpL3;
+      if(p.baseUpL12!=null)  baseUpL12=p.baseUpL12;
+      if(p.perfBaseL3!=null)  perfBaseL3=p.perfBaseL3;
+      if(p.perfBaseL12!=null) perfBaseL12=p.perfBaseL12;
+      if(p.tolerancePct!=null) tolerancePct=p.tolerancePct;
+      if(p.bufferPct!=null)   bufferPct=p.bufferPct;
+      if(p.swapCross)      swapCross=p.swapCross;
+      if(p.swapLv)         swapLv=p.swapLv;
+      if(p.swapMatrixMgr)  swapMatrixMgr=p.swapMatrixMgr;
+      if(p.swapMatrixMem)  swapMatrixMem=p.swapMatrixMem;
+      if(p.hrResultEmail)  hrResultEmail=p.hrResultEmail;
+      if(p.hrFormsUrl)     hrFormsUrl=p.hrFormsUrl;
+      if(p.confirmedFund!=null) confirmedFund=p.confirmedFund;
+    }catch(e){}
+    return; // preset 적용 후 localStorage 복원 스킵
+  }
+  // 본부 구성 복원
+  try{
+    const saved=localStorage.getItem('to_sim_depts');
+    if(saved){const p=JSON.parse(saved);if(Array.isArray(p)&&p.length>0)hrDepts=p;}
+  }catch(e){}
+  // 세팅값 복원
+  try{
+    const s=JSON.parse(localStorage.getItem('to_sim_settings')||'{}');
+    if(s.bonusBaseRate!=null) bonusBaseRate=s.bonusBaseRate;
+    if(s.bonusAdd)     bonusAdd=s.bonusAdd;
+    if(s.bonusMult)    bonusMult=s.bonusMult;
+    if(s.gradePerf)       gradePerf=s.gradePerf;
+    if(s.gradePerfL12)    gradePerfL12=s.gradePerfL12;
+    if(s.gradeBaseUp)     gradeBaseUp=s.gradeBaseUp;
+    if(s.gradeBaseUpL12)  gradeBaseUpL12=s.gradeBaseUpL12;
+    if(s.salaryMultMgr)   salaryMultMgr=s.salaryMultMgr;
+    if(s.salaryMultL3)    salaryMultL3=s.salaryMultL3;
+    if(s.salaryMultL12)   salaryMultL12=s.salaryMultL12;
+    if(s.baseUpL3!=null)   baseUpL3=s.baseUpL3;
+    if(s.baseUpL12!=null)  baseUpL12=s.baseUpL12;
+    if(s.perfBaseL3!=null)  perfBaseL3=s.perfBaseL3;
+    if(s.perfBaseL12!=null) perfBaseL12=s.perfBaseL12;
+    if(s.tolerancePct!=null) tolerancePct=s.tolerancePct;
+    if(s.bufferPct!=null)   bufferPct=s.bufferPct;
+    if(s.swapCross)      swapCross=s.swapCross;
+    if(s.swapLv)         swapLv=s.swapLv;
+    if(s.swapMatrixMgr)  swapMatrixMgr=s.swapMatrixMgr;
+    if(s.swapMatrixMem)  swapMatrixMem=s.swapMatrixMem;
+    if(s.hrResultEmail)  hrResultEmail=s.hrResultEmail;
+    if(s.hrFormsUrl)     hrFormsUrl=s.hrFormsUrl;
+  }catch(e){}
+}
+function hrSyncInputs(){
+  const el=id=>document.getElementById(id);
+  if(el('hr-bonus-base-pct')) el('hr-bonus-base-pct').value=Math.round(bonusBaseRate*100);
+  if(el('hr-baseup-l3'))  el('hr-baseup-l3').value=baseUpL3;
+  if(el('hr-baseup-l12')) el('hr-baseup-l12').value=baseUpL12;
+  if(el('hr-perfbase-l3'))  el('hr-perfbase-l3').value=perfBaseL3;
+  if(el('hr-perfbase-l12')) el('hr-perfbase-l12').value=perfBaseL12;
+  if(el('hr-tolerance'))  el('hr-tolerance').value=tolerancePct;
+  if(el('hr-buffer-pct')) el('hr-buffer-pct').value=bufferPct;
+  const crossEl=document.getElementById(swapCross==='blocked'?'swap-cross-blocked':'swap-cross-allowed');
+  const lvEl=document.getElementById(swapLv==='blocked'?'swap-lv-blocked':'swap-lv-allowed');
+  if(crossEl) crossEl.checked=true;
+  if(lvEl)    lvEl.checked=true;
+}
+function launchHR(){
+  document.getElementById('entry-screen').classList.add('hidden');
+  document.getElementById('hr-app').classList.remove('hidden');
+  hrRestoreSettings();
+  hrCollectLoad();
+  hrSyncInputs();
+  const emailEl=document.getElementById('hr-result-email');
+  if(emailEl) emailEl.value=hrResultEmail||'';
+  const formsEl=document.getElementById('hr-forms-url');
+  if(formsEl) formsEl.value=hrFormsUrl||'';
+  hrRenderDepts();hrRenderGrades();hrRenderLvTable();hrRenderSwapMatrix();hrRenderSalaryMult();hrUpdateReward();hrSimInit();
+}
+function hrTab(id,btn){
+  document.querySelectorAll('#hr-app .page').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('#hr-app .tab-btn').forEach(b=>b.classList.remove('active'));
+  document.getElementById(id).classList.add('active');btn.classList.add('active');
+  if(id==='hr-grade'){hrRenderGrades();}
+  if(id==='hr-reward'){hrRenderLvTable();hrRenderSwapMatrix();hrRenderSalaryMult();hrUpdateReward();hrSimInit();}
+  if(id==='hr-preview')hrRenderPreview();
+  if(id==='hr-generate'){hrRenderCodes();hrRenderEmailTemplateSelect();}
+  if(id==='hr-collect'){hrCollectLoad();hrCollectInit();}
+}
+
+function hrSaveDepts(){ try{localStorage.setItem('to_sim_depts',JSON.stringify(hrDepts));}catch(e){} }
+
+function hrRenderDepts(){
+  const tb=document.getElementById('hr-dept-tbody');tb.innerHTML='';
+  hrDepts.forEach((d,i)=>{
+    const tr=document.createElement('tr');
+    tr.draggable=true;
+    tr.dataset.idx=i;
+    tr.style.cursor='default';
+    const num=(v,f,mn,mx,w)=>`<input type="number" value="${v??''}" min="${mn}" max="${mx}" style="width:${w}px;"
+      onchange="hrDepts[${i}].${f}=+this.value;hrSaveDepts();hrRenderLvTable();hrUpdateReward();">`;
+    const txt=(v,f,w)=>`<input type="text" value="${v}" style="width:${w}px;"
+      onchange="hrDepts[${i}].${f}=this.value;hrSaveDepts();">`;
+    const grades=['S','A','B'];
+    const sel=`<select oninput="hrDepts[${i}].orgGrade=this.value;hrSaveDepts();" onchange="hrDepts[${i}].orgGrade=this.value;hrSaveDepts();hrUpdateReward();" style="width:60px;">
+      ${grades.map(g=>`<option value="${g}"${d.orgGrade===g?' selected':''}>${g}</option>`).join('')}
+    </select>`;
+    tr.innerHTML=`<td style="cursor:grab;text-align:center;color:#bbb;font-size:16px;user-select:none;" title="드래그하여 순서 변경">⠿</td>
+      <td>${txt(d.name,'name',90)}</td>
+      <td>${sel}</td>
+      <td>${num(d.mgrN,'mgrN',0,200,55)}</td>
+      <td>${num(d.memN,'memN',0,500,55)}</td>
+      <td style="background:rgba(60,52,137,0.06);">${num(d.mgrBase,'mgrBase',100,10000,80)}</td>
+      <td style="background:rgba(83,74,183,0.03);">${num(d.l3Base,'l3Base',100,10000,80)}</td>
+      <td style="background:rgba(24,95,165,0.03);">${num(d.l12Base,'l12Base',100,10000,80)}</td>
+      <td><button class="btn danger" onclick="hrRemoveDept(${i})">삭제</button></td>`;
+
+    // 드래그 이벤트
+    tr.addEventListener('dragstart',e=>{
+      e.dataTransfer.effectAllowed='move';
+      e.dataTransfer.setData('text/plain', i);
+      tr.style.opacity='0.4';
+    });
+    tr.addEventListener('dragend',()=>{ tr.style.opacity='1'; });
+    tr.addEventListener('dragover',e=>{ e.preventDefault(); e.dataTransfer.dropEffect='move'; tr.style.background='#f0eff8'; });
+    tr.addEventListener('dragleave',()=>{ tr.style.background=''; });
+    tr.addEventListener('drop',e=>{
+      e.preventDefault();
+      tr.style.background='';
+      const fromIdx=+e.dataTransfer.getData('text/plain');
+      const toIdx=+tr.dataset.idx;
+      if(fromIdx===toIdx) return;
+      const moved=hrDepts.splice(fromIdx,1)[0];
+      hrDepts.splice(toIdx,0,moved);
+      hrSaveDepts();
+      hrRenderDepts();
+      hrRenderLvTable();
+      hrUpdateReward();
+    });
+    tb.appendChild(tr);
+  });
+}
+function hrAddDept(){hrDepts.push({name:'신규본부',mgrN:4,memN:20,mgrBase:800,l3Base:700,l12Base:400,l3N:null,l12N:null,orgGrade:'B'});hrSaveDepts();hrRenderDepts();hrRenderLvTable();hrUpdateReward();}
+function hrRemoveDept(i){hrDepts.splice(i,1);hrSaveDepts();hrRenderDepts();hrRenderLvTable();hrUpdateReward();}
+
+function hrRenderLvTable(){
+  const tb=document.getElementById('hr-lv-tbody');tb.innerHTML='';
+  hrDepts.forEach((d,i)=>{
+    const tr=document.createElement('tr');
+    tr.innerHTML=`
+      <td style="font-weight:500;">${d.name}</td>
+      <td style="color:#888;">${d.mgrN}명</td>
+      <td style="color:#888;">${d.memN}명</td>
+      <td style="background:rgba(83,74,183,0.03);">
+        <input type="number" value="${d.l3N??''}" min="0" max="500" placeholder="${d.mgrN} (자동)" style="width:90px;"
+          onchange="hrDepts[${i}].l3N=this.value===''?null:+this.value;hrSaveDepts();hrUpdateReward();">
+      </td>
+      <td style="background:rgba(24,95,165,0.03);">
+        <input type="number" value="${d.l12N??''}" min="0" max="500" placeholder="${d.memN} (자동)" style="width:90px;"
+          onchange="hrDepts[${i}].l12N=this.value===''?null:+this.value;hrSaveDepts();hrUpdateReward();">
+      </td>`;
+    tb.appendChild(tr);
+  });
+}
+
+function hrRenderGrades(){
+  // T/O 비율표
+  const toTb=document.getElementById('hr-to-ratio-tbody');
+  if(toTb){
+    toTb.innerHTML='';
+    for(let g=0;g<6;g++){
+      const tr=document.createElement('tr');
+      const fmt=(r,og)=>{
+        if(r===null) return `<td style="text-align:center;color:#aaa;font-size:11px;">절대</td>`;
+        return `<td style="text-align:center;">${Math.round(r*100)}%</td>`;
+      };
+      tr.innerHTML=`<td><span class="badge ${GC[g]}">${GL[g]}</span></td>
+        ${fmt(TO_RATIO.mgr.S[g])} ${fmt(TO_RATIO.mgr.A[g])} ${fmt(TO_RATIO.mgr.B[g])}
+        ${fmt(TO_RATIO.mem.S[g])} ${fmt(TO_RATIO.mem.A[g])} ${fmt(TO_RATIO.mem.B[g])}`;
+      toTb.appendChild(tr);
+    }
+  }
+  // 보상 세팅 테이블
+  const tb=document.getElementById('hr-grade-tbody');
+  if(!tb) return;
+  tb.innerHTML='';
+  for(let g=0;g<6;g++){
+    const isAdd = g < 2; // 1·2등급: 가산치 방식
+    const finalPct = bonusFinalPct(g);
+    const tr=document.createElement('tr');
+    const bonusCell = isAdd
+      ? `<td style="text-align:center;">
+           기준값 +
+           <input type="number" value="${Math.round(bonusAdd[g]*100)}" min="-200" max="500" step="5" style="width:60px;text-align:center;"
+             onchange="bonusAdd[${g}]=+this.value/100;hrRenderGrades();hrUpdateReward();">
+           %p
+         </td>`
+      : `<td style="text-align:center;">
+           기준값 ×
+           <input type="number" value="${bonusMult[g]}" min="0" max="3" step="0.05" style="width:60px;text-align:center;"
+             onchange="bonusMult[${g}]=+this.value;hrRenderGrades();hrUpdateReward();">
+         </td>`;
+    tr.innerHTML=`
+      <td><span class="badge ${GC[g]}">${GL[g]}</span>
+        <span style="font-size:10px;margin-left:4px;color:#888;">${isAdd?'가산':'배수'}</span>
+      </td>
+      ${bonusCell}
+      <td style="text-align:center;font-weight:500;color:${finalPct>0?'#1a1a18':'#A32D2D'};">${finalPct}%</td>
+      <td style="text-align:center;">
+        <input type="number" value="${gradeBaseUp[g]}" min="0" max="5" step="0.1" style="width:60px;text-align:center;"
+          onchange="gradeBaseUp[${g}]=+this.value;hrUpdateReward();">
+      </td>
+      <td style="text-align:center;">
+        <input type="number" value="${gradeBaseUpL12[g]}" min="0" max="5" step="0.1" style="width:60px;text-align:center;"
+          onchange="gradeBaseUpL12[${g}]=+this.value;hrUpdateReward();">
+      </td>
+      <td style="text-align:center;">
+        <input type="number" value="${gradePerf[g]}" min="0" max="5" step="0.1" style="width:60px;text-align:center;"
+          onchange="gradePerf[${g}]=+this.value;hrUpdateReward();">
+      </td>
+      <td style="text-align:center;">
+        <input type="number" value="${gradePerfL12[g]}" min="0" max="5" step="0.1" style="width:60px;text-align:center;"
+          onchange="gradePerfL12[${g}]=+this.value;hrUpdateReward();">
+      </td>`;
+    tb.appendChild(tr);
+  }
+}
+
+function hrRenderSwapMatrix(){
+  ['mgr','mem'].forEach(role=>{
+    const tbl=document.getElementById(`hr-matrix-${role}`);
+    if(!tbl) return;
+    const mat=role==='mgr'?swapMatrixMgr:swapMatrixMem;
+    const maxG=role==='mgr'?4:5;
+    let h=`<thead>
+      <tr><th colspan="${maxG+1}" style="padding:6px 8px;background:#f0eff8;color:#3C3489;font-size:11px;text-align:left;font-weight:400;">
+        <b>읽는 방법</b>: 행(하향등급) 1명을 열(상향등급)으로 내리면 → 하위등급에서 열 등급으로 <b>값만큼</b> 올릴 수 있음
+      </th></tr>
+      <tr><th style="padding:4px 6px;background:#f5f5f3;font-size:10px;color:#888;">하향↓&nbsp;/&nbsp;상향→</th>`;
+    for(let to=0;to<maxG;to++) h+=`<th style="padding:4px 6px;text-align:center;background:#f5f5f3;"><span class="badge ${GC[to]}" style="font-size:9px;">${GL[to]}</span></th>`;
+    h+=`</tr></thead><tbody>`;
+    for(let from=0;from<maxG;from++){
+      h+=`<tr><td style="padding:4px 6px;background:#f5f5f3;"><span class="badge ${GC[from]}" style="font-size:9px;">${GL[from]}</span></td>`;
+      for(let to=0;to<maxG;to++){
+        if(from===to){
+          h+=`<td style="padding:2px 4px;text-align:center;background:#f5f5f3;"><span style="color:#ccc;font-size:10px;">—</span></td>`;
+        } else if(from>to){
+          h+=`<td style="padding:2px 4px;text-align:center;background:#faf9f7;" title="하위등급을 내려 상위등급으로 올리는 방향은 설정 불가"><span style="color:#ddd;font-size:10px;">✕</span></td>`;
+        } else {
+          const v=mat[from][to];
+          const disp=v===null?'':v;
+          h+=`<td style="padding:2px 4px;text-align:center;">
+            <input type="number" value="${disp}" min="1" max="99" step="1" placeholder="불가"
+              style="width:46px;text-align:center;font-size:11px;"
+              title="${GL[from]} 1명을 ${GL[to]}으로 내리면 → 하위등급에서 ${GL[to]}으로 최대 N명 상향"
+              oninput="swapMatrix${role==='mgr'?'Mgr':'Mem'}[${from}][${to}]=this.value===''?null:+this.value;hrUpdateReward();">
+          </td>`;
+        }
+      }
+      h+=`</tr>`;
+    }
+    // 예시 설명 행
+    const examples=[];
+    for(let from=0;from<maxG;from++)
+      for(let to=from+1;to<maxG;to++)
+        if(mat[from][to]!==null)
+          examples.push(`${GL[from]}→${GL[to]}: ${mat[from][to]}명`);
+    if(examples.length){
+      h+=`<tr><td colspan="${maxG+1}" style="padding:6px 8px;background:#f8f8ff;font-size:10px;color:#534AB7;">
+        💡 현재 규칙: ${examples.join(' &nbsp;|&nbsp; ')}
+      </td></tr>`;
+    }
+    h+=`</tbody>`;
+    tbl.innerHTML=h;
+  });
+}
+
+function hrRenderSalaryMult(){
+  const tb=document.getElementById('hr-salary-mult-tbody');
+  if(!tb) return;
+  tb.innerHTML='';
+  for(let g=0;g<6;g++){
+    const tr=document.createElement('tr');
+    tr.innerHTML=`
+      <td><span class="badge ${GC[g]}">${GL[g]}</span></td>
+      <td style="text-align:center;">
+        <input type="number" value="${salaryMultMgr[g]}" min="0.5" max="3" step="0.05" style="width:65px;text-align:center;"
+          oninput="salaryMultMgr[${g}]=+this.value||1;hrUpdateReward();">
+      </td>
+      <td style="text-align:center;">
+        <input type="number" value="${salaryMultL3[g]}" min="0.5" max="3" step="0.05" style="width:65px;text-align:center;color:#3C3489;"
+          oninput="salaryMultL3[${g}]=+this.value||1;hrUpdateReward();">
+      </td>
+      <td style="text-align:center;">
+        <input type="number" value="${salaryMultL12[g]}" min="0.5" max="3" step="0.05" style="width:65px;text-align:center;color:#0C447C;"
+          oninput="salaryMultL12[${g}]=+this.value||1;hrUpdateReward();">
+      </td>`;
+    tb.appendChild(tr);
+  }
+}
+
+function hrSimInit(){
+  const el=id=>document.getElementById(id);
+  if(!el('sim-bonus-base')) return;
+  el('sim-bonus-base').value=Math.round(bonusBaseRate*100);
+  el('sim-bonus-base-cur').textContent=Math.round(bonusBaseRate*100);
+  el('sim-baseup-l3').value=baseUpL3;
+  el('sim-baseup-l3-cur').textContent=baseUpL3+'만원';
+  el('sim-baseup-l12').value=baseUpL12;
+  el('sim-baseup-l12-cur').textContent=baseUpL12+'만원';
+  hrSimUpdate();
+}
+
+function hrSimUpdate(){
+  const el=id=>document.getElementById(id);
+  if(!el('sim-bonus-base')) return;
+  const simBonusRate=(+el('sim-bonus-base').value||0)/100;
+  const simBaseUpL3=+el('sim-baseup-l3').value||0;
+  const simBaseUpL12=+el('sim-baseup-l12').value||0;
+  // 현재 설정 재원
+  const bl=makeBaseline(hrDepts);
+  const{bonus:curBonus,salary:curSalary}=calcFund(hrDepts,bl);
+  const curFund=curBonus+curSalary;
+  // 시뮬 재원: bonusBaseRate/baseUpL3/L12만 교체해서 계산
+  const origBonusBaseRate=bonusBaseRate, origBaseUpL3=baseUpL3, origBaseUpL12=baseUpL12;
+  bonusBaseRate=simBonusRate; baseUpL3=simBaseUpL3; baseUpL12=simBaseUpL12;
+  const{bonus:simBonus,salary:simSalary}=calcFund(hrDepts,bl);
+  const simFund=simBonus+simSalary;
+  bonusBaseRate=origBonusBaseRate; baseUpL3=origBaseUpL3; baseUpL12=origBaseUpL12;
+  // 품의 목표 재원
+  const targetFund=Math.round(curFund*(1-bufferPct/100));
+  const diff=simFund-curFund;
+  const targetDiff=simFund-targetFund;
+  if(el('sim-cur-fund')) el('sim-cur-fund').textContent=curFund.toLocaleString()+'만원';
+  if(el('sim-new-fund')) el('sim-new-fund').textContent=simFund.toLocaleString()+'만원';
+  if(el('sim-diff')) el('sim-diff').innerHTML=diff===0?'변동 없음':`<span style="color:${diff>0?'#A32D2D':'#0F6E56'};font-weight:600;">${diff>0?'+':''}${diff.toLocaleString()}만원</span>`;
+  if(el('sim-target-fund')) el('sim-target-fund').textContent=targetFund.toLocaleString()+'만원';
+  if(el('sim-target-diff')){
+    if(targetDiff<=0) el('sim-target-diff').innerHTML=`<span style="color:#0F6E56;font-weight:600;">✓ 목표 달성 (${Math.abs(targetDiff).toLocaleString()}만원 여유)</span>`;
+    else el('sim-target-diff').innerHTML=`<span style="color:#A32D2D;">목표까지 ${targetDiff.toLocaleString()}만원 더 절감 필요</span>`;
+  }
+}
+
+function hrSimApply(){
+  const el=id=>document.getElementById(id);
+  if(!el('sim-bonus-base')) return;
+  // 적용 전 현재 설정 재원 저장 (본부장 한도로 사용)
+  const bl=makeBaseline(hrDepts);
+  const{bonus:curBonus,salary:curSalary}=calcFund(hrDepts,bl);
+  confirmedFund=curBonus+curSalary;
+  // 실제 세팅 적용
+  bonusBaseRate=(+el('sim-bonus-base').value||0)/100;
+  baseUpL3=+el('sim-baseup-l3').value||0;
+  baseUpL12=+el('sim-baseup-l12').value||0;
+  hrSyncInputs();
+  hrUpdateReward();
+  hrSimInit();
+  alert(`시뮬 값이 현재 세팅에 적용되었습니다.\n본부장 재원 한도 기준: ${confirmedFund.toLocaleString()}만원 (전사 합계)`);
+}
+
+let hrResultEmail='';
+let hrApiUrl='';
+let hrFormsUrl='';
+function hrSaveEmail(){
+  const emailEl=document.getElementById('hr-result-email');
+  const formsEl=document.getElementById('hr-forms-url');
+  if(emailEl) hrResultEmail=emailEl.value.trim();
+  if(formsEl) hrFormsUrl=formsEl.value.trim();
+  try{
+    const s=JSON.parse(localStorage.getItem('to_sim_settings')||'{}');
+    s.hrResultEmail=hrResultEmail;
+    s.hrFormsUrl=hrFormsUrl;
+    localStorage.setItem('to_sim_settings',JSON.stringify(s));
+  }catch(e){}
+}
+
+// GitHub Issues API로 결과 저장
+// GitHub Issues API로 전체 결과 불러오기
+function dBuildSubmitData(){
+  const{dept,to,toBaseline,baseFund}=dState;
+  const mgrLines=[], memLines=[];
+  for(let g=0;g<4;g++){
+    const diff=to[0][g]-toBaseline[0][g];
+    mgrLines.push(`${GL[g]}: ${to[0][g]}명${diff===0?'':` (${diff>0?'+':''}${diff})`}`);
+  }
+  for(let g=0;g<5;g++){
+    const diff=to[1][g]-toBaseline[1][g];
+    memLines.push(`${GL[g]}: ${to[1][g]}명${diff===0?'':` (${diff>0?'+':''}${diff})`}`);
+  }
+  const payload={dept,toBaseline,to,baseFund,
+    bonusAdd,bonusMult,gradePerf,gradePerfL12,gradeBaseUp,gradeBaseUpL12,
+    salaryMultMgr,salaryMultL3,salaryMultL12,
+    bonusBaseRate,baseUpL3,baseUpL12,perfBaseL3,perfBaseL12,
+    tolerancePct,swapCross,swapLv,swapMatrixMgr,swapMatrixMem,BASE_GRADE};
+  return{
+    deptName:dept.name,
+    resultCode:toCode(payload),
+    toSummary:{mgr:mgrLines, mem:memLines},
+    submittedAt:new Date().toISOString()
+  };
+}
+
+function dSubmitResult(){
+  if(!dState||!dState.dept){ alert('본부장 정보가 없습니다.'); return; }
+  const data=dBuildSubmitData();
+
+  // 결과 코드를 URL 파라미터에 추가 (?c=본부코드&r=결과코드)
+  const params=new URLSearchParams(window.location.search);
+  params.set('r', data.resultCode);
+  const newUrl=window.location.origin+window.location.pathname+'?'+params.toString();
+
+  // 브라우저 URL 변경 (페이지 새로고침 없이)
+  window.history.replaceState({}, '', newUrl);
+
+  // 결과 URL 클립보드 복사
+  const ta=document.createElement('textarea');
+  ta.value=newUrl;
+  ta.style.cssText='position:fixed;top:0;left:0;opacity:0.01;';
+  document.body.appendChild(ta); ta.focus(); ta.select();
+  document.execCommand('copy'); document.body.removeChild(ta);
+
+  // 제출 완료 모달
+  const prev=document.getElementById('d-submit-modal');
+  if(prev) prev.remove();
+  const modal=document.createElement('div');
+  modal.id='d-submit-modal';
+  modal.style.cssText='position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:9999;display:flex;align-items:center;justify-content:center;';
+
+  const submittedAt=new Date().toLocaleString('ko-KR');
+  modal.innerHTML=
+    '<div style="background:#fff;border-radius:12px;padding:28px;width:460px;max-width:92vw;box-shadow:0 8px 32px rgba(0,0,0,0.18);">'
+    +'<div style="font-size:16px;font-weight:600;margin-bottom:14px;">📤 결과 제출 완료</div>'
+    +'<div style="background:#f0faf5;border-radius:8px;padding:12px 14px;margin-bottom:14px;">'
+    +'<div style="font-size:13px;color:#0F6E56;font-weight:500;margin-bottom:4px;">✓ 결과가 저장되었습니다</div>'
+    +'<div style="font-size:11px;color:#888;">제출 일시: '+submittedAt+'</div>'
+    +'</div>'
+    +'<div style="font-size:12px;color:#555;margin-bottom:14px;line-height:1.9;">'
+    +'결과 URL이 클립보드에 복사되었습니다.<br>'
+    +'이 URL을 HR 담당자에게 이메일로 전달해 주세요.<br>'
+    +'<span style="font-size:11px;color:#aaa;">HR이 URL로 접속하면 결과를 바로 확인할 수 있습니다.</span>'
+    +'</div>'
+    +'<div style="background:#f5f5f3;border-radius:8px;padding:8px 12px;margin-bottom:16px;font-size:10px;font-family:monospace;color:#534AB7;word-break:break-all;">'
+    +newUrl.substring(0,100)+(newUrl.length>100?'...':'')
+    +'</div>'
+    +'<div style="display:flex;gap:8px;justify-content:flex-end;">'
+    +'<button id="d-modal-close-btn" style="padding:8px 18px;border:1px solid #ddd;border-radius:6px;background:#fff;cursor:pointer;font-size:13px;color:#555;">닫기</button>'
+    +'</div>'
+    +'</div>';
+  document.body.appendChild(modal);
+  var cb=document.getElementById('d-modal-close-btn');
+  if(cb) cb.onclick=function(){var m=document.getElementById('d-submit-modal');if(m)m.remove();};
+}
+
+function dSubmitByEmail(data){
+  const subject=`[TO조정결과] ${data.deptName} 본부`;
+  const body=`${data.deptName} 본부 T/O 조정 결과를 제출합니다.\n\n■ 팀장 T/O\n${data.toSummary.mgr.join('\n')}\n\n■ 팀원 T/O\n${data.toSummary.mem.join('\n')}\n\n■ 결과 코드\n${data.resultCode}\n\n※ 평가 T/O 시뮬레이터 자동 생성`;
+  navigator.clipboard.writeText(body).catch(()=>{
+    const ta=document.createElement('textarea');
+    ta.value=body;ta.style.cssText='position:fixed;opacity:0;';
+    document.body.appendChild(ta);ta.select();document.execCommand('copy');
+    document.body.removeChild(ta);
+  });
+  dShowSubmitModal(subject,body,hrResultEmail||'');
+}
+
+function dShowToastSuccess(msg){
+  let t=document.getElementById('d-success-toast');
+  if(!t){
+    t=document.createElement('div');t.id='d-success-toast';
+    t.style.cssText='position:fixed;bottom:24px;left:50%;transform:translateX(-50%);background:#1D9E75;color:#fff;padding:12px 24px;border-radius:8px;font-size:14px;font-weight:500;z-index:9999;box-shadow:0 4px 12px rgba(0,0,0,0.15);';
+    document.body.appendChild(t);
+  }
+  t.textContent=msg;t.style.opacity='1';
+  clearTimeout(t._timer);
+  t._timer=setTimeout(()=>t.style.opacity='0',3000);
+}
+
+/* ── 결과 취합 ── */
+let hrCollectResults = {}; // {deptName: {to, toBaseline, submittedAt, ...}}
+
+async function hrSaveSettingsFile(){
+  const fb=document.getElementById('hr-save-feedback');
+  if(fb) fb.innerHTML='<span style="color:#888;">생성 중...</span>';
+
+  const settings={
+    hrDepts,bonusBaseRate,bonusAdd,bonusMult,
+    gradePerf,gradePerfL12,gradeBaseUp,gradeBaseUpL12,
+    salaryMultMgr,salaryMultL3,salaryMultL12,
+    baseUpL3,baseUpL12,perfBaseL3,perfBaseL12,
+    tolerancePct,bufferPct,swapCross,swapLv,
+    swapMatrixMgr,swapMatrixMem,
+    hrResultEmail,hrFormsUrl,confirmedFund
+  };
+
+  try{
+    // GitHub Pages에서 원본 파일 fetch
+    const baseUrl=window.location.origin+window.location.pathname;
+    const res=await fetch(baseUrl+'?nocache='+Date.now());
+    let html=await res.text();
+
+    // 기존 preset 제거
+    html=html.replace(/<script id="__preset__">[\s\S]*?<\/script>\n?/g,'');
+
+    // </head> 바로 앞에 preset만 주입 (원본 JS 코드는 건드리지 않음)
+    const presetOpen='<scr'+'ipt id="__preset__">';
+    const presetClose='<\/scr'+'ipt>\n';
+    const presetContent='window.__HR_PRESET__='+JSON.stringify(settings)+';';
+    const preset=presetOpen+presetContent+presetClose;
+    html=html.replace('</head>', preset+'</head>');
+
+    const blob=new Blob([html],{type:'text/html;charset=utf-8'});
+    const url=URL.createObjectURL(blob);
+    const a=document.createElement('a');
+    a.href=url; a.download='index.html';
+    document.body.appendChild(a); a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+    if(fb) fb.innerHTML='<span style="color:#0F6E56;">✓ index.html 생성 완료 — GitHub 저장소에 업로드하세요</span>';
+  }catch(e){
+    // fetch 실패 시 안내
+    if(fb) fb.innerHTML='<span style="color:#A32D2D;">✗ 생성 실패 — GitHub Pages URL에서만 동작합니다. ('+e.message+')</span>';
+  }
+}
+
+function hrCollectInit(){
+  hrCollectRender();
+}
+
+function hrCollectFromFiles(files){
+  if(!files||files.length===0) return;
+  let successCount=0, failCount=0;
+  let processed=0;
+  const total=files.length;
+  Array.from(files).forEach(file=>{
+    const reader=new FileReader();
+    reader.onload=e=>{
+      const text=(e.target.result||'').trim();
+      // 파일에서 결과 코드 추출 (RESULT_CODE: 로 시작하는 줄)
+      let code=text;
+      const match=text.match(/RESULT_CODE:\s*(.+)/);
+      if(match) code=match[1].trim();
+      try{
+        const cfg=fromDeptCode(code);
+        if(!cfg.dept) throw new Error('본부 정보 없음');
+        const to=cfg.to||cfg.toBaseline;
+        const toBaseline=cfg.toBaseline||cfg.to;
+        if(!to||!toBaseline) throw new Error('T/O 정보 없음');
+        hrCollectResults[cfg.dept.name]={
+          dept:cfg.dept, to, toBaseline,
+          baseFund:cfg.baseFund,
+          submittedAt:new Date().toLocaleString('ko-KR')
+        };
+        successCount++;
+      }catch(err){ failCount++; }
+      processed++;
+      if(processed===total){
+        try{ localStorage.setItem('hr_collect_results',JSON.stringify(hrCollectResults)); }catch(e){}
+        const fb=document.getElementById('hr-collect-feedback');
+        if(fb){
+          fb.innerHTML=`<div style="font-size:12px;padding:6px 10px;border-radius:6px;background:${failCount===0?'#f0faf5':'#FEF3E2'};color:${failCount===0?'#0F6E56':'#633806'};">
+            ✓ ${successCount}개 등록 완료${failCount>0?` / ${failCount}개 실패`:''}
+          </div>`;
+          setTimeout(()=>{ if(fb) fb.innerHTML=''; },3000);
+        }
+        hrCollectRender();
+      }
+    };
+    reader.readAsText(file);
+  });
+}
+
+function hrCollectAdd(){
+  const codeEl=document.getElementById('hr-collect-code');
+  const code=(codeEl.value||'').trim();
+  if(!code){ alert('결과 코드를 입력해주세요.'); return; }
+  let cfg;
+  try{ cfg=fromDeptCode(code); }
+  catch(e){ alert('올바르지 않은 코드입니다. 다시 확인해주세요.'); return; }
+  if(!cfg.dept){ alert('본부 정보가 없는 코드입니다.'); return; }
+  // to와 toBaseline이 없으면 toBaseline 기준으로 초기화
+  const to=cfg.to||cfg.toBaseline;
+  const toBaseline=cfg.toBaseline||cfg.to;
+  if(!to||!toBaseline){ alert('T/O 정보가 없는 코드입니다.'); return; }
+  const deptName=cfg.dept.name;
+  hrCollectResults[deptName]={
+    dept:cfg.dept,
+    to:to,
+    toBaseline:toBaseline,
+    baseFund:cfg.baseFund,
+    submittedAt:new Date().toLocaleString('ko-KR')
+  };
+  // localStorage 저장
+  try{ localStorage.setItem('hr_collect_results',JSON.stringify(hrCollectResults)); }catch(e){}
+  codeEl.value='';
+  hrCollectRender();
+}
+
+function hrCollectClear(){
+  if(!confirm('등록된 결과를 모두 초기화할까요?')) return;
+  hrCollectResults={};
+  try{ localStorage.removeItem('hr_collect_results'); }catch(e){}
+  hrCollectRender();
+}
+
+function hrCollectRemove(deptName){
+  delete hrCollectResults[deptName];
+  try{ localStorage.setItem('hr_collect_results',JSON.stringify(hrCollectResults)); }catch(e){}
+  hrCollectRender();
+}
+
+function hrCollectLoad(){
+  try{
+    const raw=localStorage.getItem('hr_collect_results');
+    if(raw) hrCollectResults=JSON.parse(raw);
+  }catch(e){}
+}
+
+function hrCollectRender(){
+  const countEl=document.getElementById('hr-collect-count');
+  const statusEl=document.getElementById('hr-collect-status');
+  const listEl=document.getElementById('hr-collect-list');
+  if(!listEl) return;
+
+  const total=hrDepts.length;
+  const submitted=Object.keys(hrCollectResults).length;
+  const notSubmitted=hrDepts.filter(d=>!hrCollectResults[d.name]).map(d=>d.name);
+
+  if(countEl) countEl.textContent=`(${submitted}/${total}개 본부 제출)`;
+
+  // 미제출 현황
+  if(statusEl){
+    if(notSubmitted.length===0){
+      statusEl.innerHTML=`<div style="background:#f0faf5;border-radius:8px;padding:12px 16px;font-size:13px;color:#0F6E56;font-weight:500;">✓ 전체 ${total}개 본부 제출 완료</div>`;
+    } else {
+      const submittedDepts=hrDepts.filter(d=>hrCollectResults[d.name]);
+      let deptGrid='<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(120px,1fr));gap:6px;margin-top:10px;">';
+      hrDepts.forEach(d=>{
+        const done=!!hrCollectResults[d.name];
+        deptGrid+=`<div style="display:flex;align-items:center;gap:6px;padding:6px 10px;border-radius:6px;
+          background:${done?'#f0faf5':'#fff9f0'};border:1px solid ${done?'#b8e8d4':'#f0d5a0'};">
+          <span style="font-size:13px;">${done?'✓':'○'}</span>
+          <span style="font-size:11px;font-weight:${done?'400':'500'};color:${done?'#555':'#633806'};">${d.name.replace('본부','')}</span>
+        </div>`;
+      });
+      deptGrid+='</div>';
+      statusEl.innerHTML=`
+        <div style="background:#FEF3E2;border-radius:8px;padding:12px 16px;">
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:2px;">
+            <span style="font-size:13px;font-weight:600;color:#633806;">미제출 ${notSubmitted.length}개 본부</span>
+            <span style="font-size:12px;color:#888;">제출 완료 ${submitted}/${total}</span>
+          </div>
+          ${deptGrid}
+        </div>`;
+    }
+  }
+
+  if(submitted===0){
+    listEl.innerHTML=`<div style="text-align:center;color:#aaa;font-size:13px;padding:24px 0;">아직 등록된 결과가 없습니다</div>`;
+    return;
+  }
+
+  // 등록된 결과 목록
+  let html='<div style="display:flex;flex-direction:column;gap:12px;">';
+  Object.values(hrCollectResults).forEach(r=>{
+    const{dept,to,toBaseline}=r;
+    if(!dept||!to||!toBaseline) return;
+    // toBaseline/to가 [[...],[...]] 구조인지 확인, 아니면 스킵
+    if(!Array.isArray(to[0])||!Array.isArray(toBaseline[0])) return;
+    const og=dept.orgGrade||'B';
+    // 팀장 T/O 요약
+    let mgrHtml='', memHtml='';
+    for(let g=0;g<4;g++){
+      const base=toBaseline[0][g], cur=to[0][g], diff=cur-base;
+      const diffStr=diff===0?'':` <span style="color:${diff>0?'#A32D2D':'#0F6E56'};font-size:10px;">${diff>0?'+':''}${diff}</span>`;
+      mgrHtml+=`<span style="margin-right:8px;font-size:11px;"><span class="badge ${GC[g]}" style="font-size:9px;">${GL[g]}</span> ${cur}명${diffStr}</span>`;
+    }
+    for(let g=0;g<5;g++){
+      const base=toBaseline[1][g], cur=to[1][g], diff=cur-base;
+      const diffStr=diff===0?'':` <span style="color:${diff>0?'#A32D2D':'#0F6E56'};font-size:10px;">${diff>0?'+':''}${diff}</span>`;
+      memHtml+=`<span style="margin-right:8px;font-size:11px;"><span class="badge ${GC[g]}" style="font-size:9px;">${GL[g]}</span> ${cur}명${diffStr}</span>`;
+    }
+    html+=`<div style="border:1px solid rgba(0,0,0,0.08);border-radius:8px;padding:12px 14px;">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;">
+        <div style="display:flex;align-items:center;gap:8px;">
+          <span style="font-weight:600;font-size:13px;">${dept.name}</span>
+          <span style="font-size:10px;font-weight:600;padding:1px 6px;border-radius:4px;
+            background:${og==='S'?'#534AB7':og==='A'?'#0F6E56':'#633806'};
+            color:#fff;">${og}</span>
+          <span style="font-size:11px;color:#888;">팀장 ${dept.mgrN}명 / 팀원 ${dept.memN}명</span>
+        </div>
+        <div style="display:flex;align-items:center;gap:8px;">
+          <span style="font-size:10px;color:#aaa;">${r.submittedAt||''}</span>
+          <button onclick="hrCollectRemove('${dept.name}')"
+            style="font-size:11px;padding:2px 8px;border:1px solid #ddd;border-radius:4px;background:#fff;cursor:pointer;color:#888;">삭제</button>
+        </div>
+      </div>
+      <div style="margin-bottom:4px;"><span style="font-size:11px;font-weight:500;color:#444;margin-right:8px;">팀장</span>${mgrHtml}</div>
+      <div><span style="font-size:11px;font-weight:500;color:#444;margin-right:8px;">팀원</span>${memHtml}</div>
+    </div>`;
+  });
+  html+='</div>';
+  listEl.innerHTML=html;
+}
+
+function hrUpdateReward(){
+  const el=id=>document.getElementById(id);
+  if(el('hr-bonus-base-pct')) bonusBaseRate=+el('hr-bonus-base-pct').value/100;
+  if(el('hr-baseup-l3'))  baseUpL3=+el('hr-baseup-l3').value||0;
+  if(el('hr-baseup-l12')) baseUpL12=+el('hr-baseup-l12').value||0;
+  if(el('hr-perfbase-l3'))  perfBaseL3=+el('hr-perfbase-l3').value||0;
+  if(el('hr-perfbase-l12')) perfBaseL12=+el('hr-perfbase-l12').value||0;
+  if(el('hr-tolerance'))  tolerancePct=+el('hr-tolerance').value;
+  if(el('hr-buffer-pct')) bufferPct=+el('hr-buffer-pct').value||0;
+  const crossEl=document.querySelector('input[name="swap-cross"]:checked');
+  const lvEl=document.querySelector('input[name="swap-lv"]:checked');
+  if(crossEl) swapCross=crossEl.value;
+  if(lvEl) swapLv=lvEl.value;
+  if(el('hr-tolerance-val'))  el('hr-tolerance-val').textContent=tolerancePct;
+  if(el('hr-bonus-base-display')) el('hr-bonus-base-display').textContent=Math.round(bonusBaseRate*100)+'%';
+  // 등급별 성과인상 정액 미리보기 (보상 재원 탭이 열려있을 때만)
+  const perfTb=el('hr-perf-preview-tbody');
+  if(perfTb){
+    const rP=gradePerf[BASE_GRADE];
+    let pRows='';
+    for(let g=0;g<6;g++){
+      const relP=rP>0?gradePerf[g]/rP:0;
+      const l3amt=perfAmtL3(g), l12amt=perfAmtL12(g);
+      const l3total=baseUpAmtL3(g)+l3amt, l12total=baseUpAmtL12(g)+l12amt;
+      pRows+=`<tr>
+        <td><span class="badge ${GC[g]}">${GL[g]}</span></td>
+        <td style="color:#3C3489;font-weight:500;">${l3amt.toLocaleString()}</td>
+        <td style="color:#3C3489;font-weight:600;background:rgba(83,74,183,0.06);">${l3total.toLocaleString()}</td>
+        <td style="color:#0C447C;font-weight:500;">${l12amt.toLocaleString()}</td>
+        <td style="color:#0C447C;font-weight:600;background:rgba(24,95,165,0.06);">${l12total.toLocaleString()}</td>
+      </tr>`;
+    }
+    perfTb.innerHTML=pRows;
+  }
+  const bl=makeBaseline(hrDepts);
+  const{bonus,salary}=calcFund(hrDepts,bl);
+  if(el('hr-r-bonus'))   el('hr-r-bonus').textContent=bonus.toLocaleString()+'만원';
+  if(el('hr-r-salary'))  el('hr-r-salary').textContent=salary.toLocaleString()+'만원';
+  if(el('hr-r-total'))   el('hr-r-total').textContent=(bonus+salary).toLocaleString()+'만원';
+  const tot=bonus+salary;
+  if(el('hr-r-tolerance')){
+    el('hr-r-tolerance').textContent=`${Math.round(tot*(1-tolerancePct/100)).toLocaleString()} ~ ${Math.round(tot*(1+tolerancePct/100)).toLocaleString()}만원`;
+  }
+  // B: 전사 B이하 기준 재원 계산
+  const blB=hrDepts.map(dept=>{
+    const m=lookupTO('mgr','B',dept.mgrN);
+    const e=lookupTO('mem','B',dept.memN);
+    return[[...m],[...e]];
+  });
+  const{bonus:bonusB,salary:salaryB}=calcFund(hrDepts,blB);
+  const totB=bonusB+salaryB;
+  const diff=tot-totB;
+  if(el('hr-r-base-b')) el('hr-r-base-b').textContent=totB.toLocaleString();
+  if(el('hr-r-base-cur')) el('hr-r-base-cur').textContent=tot.toLocaleString();
+  if(el('hr-r-base-diff')){
+    const sign=diff>0?'+':'';
+    el('hr-r-base-diff').innerHTML=diff===0?'동일':`<span style="color:${diff>0?'#A32D2D':'#0F6E56'};font-weight:600;">${sign}${diff.toLocaleString()}</span>`;
+  }
+  if(el('hr-r-sa-note')){
+    const saCnt=hrDepts.filter(d=>d.orgGrade==='S'||d.orgGrade==='A').length;
+    el('hr-r-sa-note').textContent=saCnt>0
+      ?`S/A등급 ${saCnt}개 본부 → +${diff.toLocaleString()}만원 추가 소요`
+      :'현재 모든 본부 B이하 (S/A 없음)';
+  }
+  // C: 버퍼율 적용 조정 재원 — 현재 설정(S/A 반영) 재원에서 버퍼 차감 (방향 B)
+  const bufferAmt=Math.round(tot*bufferPct/100);
+  const adjusted=tot-bufferAmt;
+  if(el('hr-r-adjusted')) el('hr-r-adjusted').textContent=adjusted.toLocaleString()+'만원';
+  if(el('hr-r-buffer-amt')) el('hr-r-buffer-amt').textContent=bufferAmt.toLocaleString()+'만원';
+  // 전체 세팅값 저장
+  try{
+    localStorage.setItem('to_sim_settings', JSON.stringify({
+      bonusBaseRate, bonusAdd, bonusMult,
+      gradePerf, gradePerfL12, gradeBaseUp, gradeBaseUpL12,
+      salaryMultMgr, salaryMultL3, salaryMultL12,
+      baseUpL3, baseUpL12, perfBaseL3, perfBaseL12,
+      tolerancePct, bufferPct, swapCross, swapLv,
+      swapMatrixMgr, swapMatrixMem
+    }));
+  }catch(e){}
+}
+
+/* ── 재원 계산 핵심 ── */
+// 최대잉여법: 상대평가 등급끼리만 배분, 동률 시 상위등급(낮은 인덱스) 우선
+function hamiltonAlloc(total, ratios){
+  const result = new Array(ratios.length).fill(0);
+  const relIdx = ratios.map((r,i)=>r!==null?i:-1).filter(i=>i>=0);
+  const relRatios = relIdx.map(i=>ratios[i]);
+  const floors = relRatios.map(r=>Math.floor(total*r));
+  const remainders = relRatios.map((r,k)=>total*r - floors[k]);
+  let remaining = total - floors.reduce((a,b)=>a+b,0);
+  // 동률 시 상위등급(낮은 인덱스) 우선: rem 내림차순, 동률이면 k 오름차순
+  const order = remainders.map((rem,k)=>({k,rem}))
+    .sort((a,b)=> b.rem!==a.rem ? b.rem-a.rem : a.k-b.k);
+  const alloc = [...floors];
+  for(let k=0;k<remaining;k++) alloc[order[k].k]++;
+  relIdx.forEach((i,k)=>{ result[i]=alloc[k]; });
+  return result;
+}
+
+function makeBaseline(depts){
+  return depts.map(dept=>{
+    const og=dept.orgGrade||'B';
+    const m=lookupTO('mgr', og, dept.mgrN);
+    const e=lookupTO('mem', og, dept.memN);
+    return[[...m],[...e]];
+  });
+}
+
+// 연봉인상 정액: L1·L2 기준값 × (L3는 ×1.15) × 등급별 배수, 5만원 단위 올림
+function ceil5(v){ return Math.ceil(v/5)*5; }
+function baseUpAmtL3(g){  return ceil5(baseUpL3  * gradeBaseUp[g]); }
+function baseUpAmtL12(g){ return ceil5(baseUpL12 * gradeBaseUpL12[g]); }
+function perfAmtL3(g){  return ceil5(perfBaseL3  * gradePerf[g]); }
+function perfAmtL12(g){ return ceil5(perfBaseL12 * gradePerfL12[g]); }
+
+// 성과급 지급률: 1·2등급 = 기준값+가산치, 3~6등급 = 기준값×배수
+// 성과급 지급률: 1·2등급 = 기준값+가산치, 3~6등급 = 기준값×배수
+function bonusRate(g){
+  return g < 2 ? bonusBaseRate + bonusAdd[g] : bonusBaseRate * bonusMult[g];
+}
+// 성과급 최종 지급률: 10% 단위 올림 (실제 계산에 사용)
+function bonusFinalPct(g){ return Math.ceil(bonusRate(g)*10)*10; }
+function bonusRateFinal(g){ return bonusFinalPct(g)/100; }
+
+function unitCostMgr(dept,g){
+  const base=(dept.mgrBase||dept.l3Base)*(salaryMultMgr[g]||1.0);
+  return base*bonusRateFinal(g) + baseUpAmtL3(g) + perfAmtL3(g);
+}
+function unitCostMem(dept,g){
+  return dept.l12Base*(salaryMultL12[g]||1.0)*bonusRateFinal(g) + baseUpAmtL12(g) + perfAmtL12(g);
+}
+
+function splitL3L12(eN, l3N, l12N){
+  const tot=l3N+l12N;
+  if(tot===0||eN===0) return[0,0];
+  let l3=Math.floor(eN*l3N/tot), l12=Math.floor(eN*l12N/tot);
+  const rem=eN-l3-l12;
+  if(rem>0){
+    const r3=eN*l3N/tot-l3, r12=eN*l12N/tot-l12;
+    if(r3>=r12) l3+=rem; else l12+=rem;
+  }
+  return[l3,l12];
+}
+
+function calcFund(depts,baseline){
+  let bonus=0,salary=0;
+  for(let d=0;d<depts.length;d++){
+    const dept=depts[d];
+    const l3N=getL3N(dept), l12N=getL12N(dept);
+    const mBase=dept.mgrBase||dept.l3Base;
+    for(let g=0;g<6;g++){
+      const mN=baseline[d][0][g], eN=baseline[d][1][g];
+      const[l3gN,l12gN]=splitL3L12(eN,l3N,l12N);
+      const mBaseG=mBase*(salaryMultMgr[g]||1.0);
+      const l3BaseG=dept.l3Base*(salaryMultL3[g]||1.0);
+      const l12BaseG=dept.l12Base*(salaryMultL12[g]||1.0);
+      bonus += Math.round(mBaseG*bonusRateFinal(g)*mN)
+             + Math.round(l3BaseG*bonusRateFinal(g)*l3gN)
+             + Math.round(l12BaseG*bonusRateFinal(g)*l12gN);
+      salary += Math.round((baseUpAmtL3(g)+perfAmtL3(g))*mN)
+              + Math.round((baseUpAmtL3(g)+perfAmtL3(g))*l3gN)
+              + Math.round((baseUpAmtL12(g)+perfAmtL12(g))*l12gN);
+    }
+  }
+  return{bonus,salary};
+}
+
+function calcDeptFund(dept,to){
+  const l3N=getL3N(dept), l12N=getL12N(dept);
+  const mBase=dept.mgrBase||dept.l3Base;
+  let tot=0;
+  for(let g=0;g<6;g++){
+    const mN=to[0][g], eN=to[1][g];
+    const[l3gN,l12gN]=splitL3L12(eN,l3N,l12N);
+    const mBaseG=mBase*(salaryMultMgr[g]||1.0);
+    const l3BaseG=dept.l3Base*(salaryMultL3[g]||1.0);
+    const l12BaseG=dept.l12Base*(salaryMultL12[g]||1.0);
+    tot += Math.round(mBaseG*bonusRateFinal(g)*mN)
+         + Math.round(l3BaseG*bonusRateFinal(g)*l3gN)
+         + Math.round(l12BaseG*bonusRateFinal(g)*l12gN)
+         + Math.round((baseUpAmtL3(g)+perfAmtL3(g))*mN)
+         + Math.round((baseUpAmtL3(g)+perfAmtL3(g))*l3gN)
+         + Math.round((baseUpAmtL12(g)+perfAmtL12(g))*l12gN);
+  }
+  return tot;
+}
+
+/* ── 미리보기 & 코드 ── */
+function hrRenderPreview(){
+  const bl=makeBaseline(hrDepts);
+  const{bonus,salary}=calcFund(hrDepts,bl);
+  const tot=bonus+salary;
+  // 전사 B이하 기준 재원
+  const blB=hrDepts.map(dept=>[[...lookupTO('mgr','B',dept.mgrN)],[...lookupTO('mem','B',dept.memN)]]);
+  const{bonus:bonusB,salary:salaryB}=calcFund(hrDepts,blB);
+  const totB=bonusB+salaryB;
+  const bufferAmt=Math.round(tot*bufferPct/100);
+  const adjusted=tot-bufferAmt;
+  const diff=tot-totB;
+
+  let html=`<div class="metric-row col4">
+    <div class="metric-card"><div class="metric-label">전체 인원</div><div class="metric-value">${hrDepts.reduce((a,d)=>a+d.mgrN+d.memN,0)}명</div><div class="metric-sub">팀장 ${hrDepts.reduce((a,d)=>a+d.mgrN,0)} / 팀원 ${hrDepts.reduce((a,d)=>a+d.memN,0)}</div></div>
+    <div class="metric-card"><div class="metric-label">현재 설정 재원</div><div class="metric-value">${tot.toLocaleString()}만원</div><div class="metric-sub">조직평가 등급 반영</div></div>
+    <div class="metric-card"><div class="metric-label">B이하 기준 재원</div><div class="metric-value">${totB.toLocaleString()}만원</div><div class="metric-sub">${diff>0?`<span style="color:#A32D2D;">S/A 추가 +${diff.toLocaleString()}만원</span>`:'전사 B이하 동일'}</div></div>
+    <div class="metric-card" style="background:#EEEDFE;"><div class="metric-label" style="color:#534AB7;">품의 목표 재원 <span style="font-size:10px;">(조정율 ${bufferPct}%)</span></div><div class="metric-value" style="color:#3C3489;">${adjusted.toLocaleString()}만원</div><div class="metric-sub" style="color:#7B74CC;">현재 재원 - ${bufferAmt.toLocaleString()}만원 절감</div></div>
+  </div>`;
+
+  hrDepts.forEach((dept,d)=>{
+    const{bonus:db,salary:ds}=calcFund([dept],[bl[d]]);
+    // 본부별 배포 재원 = 조직등급 반영 재원 - 버퍼 (방향 B)
+    const deptFundRaw=db+ds;
+    const deptAdjusted=Math.round(deptFundRaw*(1-bufferPct/100));
+    const deptBufAmt=deptFundRaw-deptAdjusted;
+    // B이하 기준 재원 (참고용)
+    const blBDept=[[...lookupTO('mgr','B',dept.mgrN)],[...lookupTO('mem','B',dept.memN)]];
+    const deptFundB=calcDeptFund(dept,blBDept);
+    const l3n=getL3N(dept),l12n=getL12N(dept);
+    html+=`<div class="card"><h3>${dept.name}
+      <span style="font-size:12px;font-weight:400;color:#888;">팀장 ${dept.mgrN}명 / 팀원 ${dept.memN}명</span>
+    </h3>
+    <table style="font-size:12px;"><thead>
+      <tr>
+        <th rowspan="2" style="vertical-align:bottom;">등급</th>
+        <th colspan="3" style="text-align:center;border-bottom:0.5px solid rgba(0,0,0,0.1);">팀장 (${dept.mgrN}명 / ${(dept.mgrBase||dept.l3Base).toLocaleString()}만원)</th>
+        <th colspan="3" style="text-align:center;border-bottom:0.5px solid rgba(83,74,183,0.3);color:#3C3489;"><span class="badge lv3">L3</span> 팀원 (${l3n}명 / ${dept.l3Base.toLocaleString()}만원)</th>
+        <th colspan="3" style="text-align:center;border-bottom:0.5px solid rgba(24,95,165,0.3);color:#0C447C;"><span class="badge lv12">L1·L2</span> 팀원 (${l12n}명 / ${dept.l12Base.toLocaleString()}만원)</th>
+      </tr>
+      <tr>
+        <th>인원</th><th>성과급</th><th>연봉인상</th>
+        <th style="color:#3C3489;">인원</th><th style="color:#3C3489;">성과급</th><th style="color:#3C3489;">연봉인상</th>
+        <th style="color:#0C447C;">인원</th><th style="color:#0C447C;">성과급</th><th style="color:#0C447C;">연봉인상</th>
+      </tr>
+    </thead><tbody>`;
+    let mgrTotal=0, memTotal=0;
+    let mgrBonusTot=0, mgrSalTot=0;
+    let l3BonusTot=0, l3SalTot=0;
+    let l12BonusTot=0, l12SalTot=0;
+    for(let g=0;g<6;g++){
+      const mN=bl[d][0][g], eN=bl[d][1][g];
+      // 팀원 eN명을 L3/L12 비율로 정수 배분 (최대잉여법)
+      const totMem=l3n+l12n;
+      let l3gN=0, l12gN=0;
+      if(totMem>0 && eN>0){
+        l3gN=Math.floor(eN*l3n/totMem);
+        l12gN=Math.floor(eN*l12n/totMem);
+        const rem=eN-l3gN-l12gN;
+        // 잔여는 소수점 큰 쪽에
+        const r3=eN*l3n/totMem-l3gN, r12=eN*l12n/totMem-l12gN;
+        if(rem>0){ if(r3>=r12) l3gN+=rem; else l12gN+=rem; }
+      }
+      const mBase=dept.mgrBase||dept.l3Base;
+      // 팀장
+      const mgrBonus=Math.round(mBase*bonusRateFinal(g)*mN);
+      const mgrSal  =Math.round((baseUpAmtL3(g)+perfAmtL3(g))*mN);
+      // L3 팀원
+      const l3Bonus =Math.round(dept.l3Base*bonusRateFinal(g)*l3gN);
+      const l3Sal   =Math.round((baseUpAmtL3(g)+perfAmtL3(g))*l3gN);
+      // L12 팀원
+      const l12Bonus=Math.round(dept.l12Base*bonusRateFinal(g)*l12gN);
+      const l12Sal  =Math.round((baseUpAmtL12(g)+perfAmtL12(g))*l12gN);
+      mgrBonusTot+=mgrBonus; mgrSalTot+=mgrSal;
+      l3BonusTot+=l3Bonus;   l3SalTot+=l3Sal;
+      l12BonusTot+=l12Bonus; l12SalTot+=l12Sal;
+      mgrTotal+=mgrBonus+mgrSal;
+      memTotal+=l3Bonus+l3Sal+l12Bonus+l12Sal;
+      html+=`<tr>
+        <td><span class="badge ${GC[g]}">${GL[g]}</span></td>
+        <td>${mN}명</td>
+        <td>${mgrBonus.toLocaleString()}</td>
+        <td>${mgrSal.toLocaleString()}</td>
+        <td style="color:#3C3489;">${l3gN}명</td>
+        <td style="color:#3C3489;">${l3Bonus.toLocaleString()}</td>
+        <td style="color:#3C3489;">${l3Sal.toLocaleString()}</td>
+        <td style="color:#0C447C;">${l12gN}명</td>
+        <td style="color:#0C447C;">${l12Bonus.toLocaleString()}</td>
+        <td style="color:#0C447C;">${l12Sal.toLocaleString()}</td>
+      </tr>`;
+    }
+    html+=`<tr style="border-top:1.5px solid rgba(0,0,0,0.12);background:#f0f0f8;font-weight:700;">
+      <td>합계</td>
+      <td>${dept.mgrN}명</td>
+      <td>${mgrBonusTot.toLocaleString()}</td>
+      <td>${mgrSalTot.toLocaleString()}</td>
+      <td style="color:#3C3489;">${l3n}명</td>
+      <td style="color:#3C3489;">${l3BonusTot.toLocaleString()}</td>
+      <td style="color:#3C3489;">${l3SalTot.toLocaleString()}</td>
+      <td style="color:#0C447C;">${l12n}명</td>
+      <td style="color:#0C447C;">${l12BonusTot.toLocaleString()}</td>
+      <td style="color:#0C447C;">${l12SalTot.toLocaleString()}</td>
+    </tr>
+    <tr style="background:#e8e8f4;">
+      <td colspan="2" style="font-weight:700;font-size:12px;">본부 합계</td>
+      <td colspan="2" style="font-weight:700;color:#2E4057;">팀장 ${mgrTotal.toLocaleString()}만원</td>
+      <td colspan="3" style="font-weight:700;color:#3C3489;">L3팀원 ${(l3BonusTot+l3SalTot).toLocaleString()}만원</td>
+      <td colspan="3" style="font-weight:700;color:#0C447C;">L1·L2팀원 ${(l12BonusTot+l12SalTot).toLocaleString()}만원</td>
+    </tr>
+    <tr style="background:#dde0f0;">
+      <td colspan="4" style="font-weight:700;font-size:13px;">전체 합계</td>
+      <td colspan="6" style="font-weight:700;font-size:14px;color:#2E4057;">${(db+ds).toLocaleString()}만원</td>
+    </tr>
+    <tr style="background:#EEEDFE;">
+      <td colspan="4" style="font-weight:700;font-size:13px;color:#534AB7;">배포 재원 <span style="font-size:10px;font-weight:400;color:#7B74CC;">(조직평가 반영 재원 - 버퍼 ${bufferPct}%)</span></td>
+      <td colspan="6" style="font-weight:700;font-size:14px;color:#3C3489;">${deptAdjusted.toLocaleString()}만원 <span style="font-size:11px;font-weight:400;color:#7B74CC;">(버퍼 ${deptBufAmt.toLocaleString()}만원 차감)</span></td>
+    </tr>`;
+    html+=`</tbody></table>
+    <div style="margin-top:10px;font-size:13px;color:#555;">조직평가 반영 재원: <strong>${(db+ds).toLocaleString()}만원</strong> &nbsp;/&nbsp; B이하 기준: <strong>${deptFundB.toLocaleString()}만원</strong></div></div>`;
+  });
+  document.getElementById('hr-preview-content').innerHTML=html;
+}
+
+function applyAutoBuffer(){
+  const el=id=>document.getElementById(id);
+  // 현재 재원과 B이하 기준 재원 재계산
+  const bl=makeBaseline(hrDepts);
+  const{bonus,salary}=calcFund(hrDepts,bl);
+  const tot=bonus+salary;
+  const blB=hrDepts.map(dept=>{
+    const m=lookupTO('mgr','B',dept.mgrN);
+    const e=lookupTO('mem','B',dept.memN);
+    return[[...m],[...e]];
+  });
+  const{bonus:bonusB,salary:salaryB}=calcFund(hrDepts,blB);
+  const totB=bonusB+salaryB;
+  const diff=tot-totB;
+  if(diff<=0){
+    if(el('hr-auto-buffer-note')) el('hr-auto-buffer-note').textContent='현재 모든 본부 B이하 — 조정 불필요';
+    return;
+  }
+  // 버퍼율 = S/A 추가 소요 / 현재 설정(S/A 반영) 재원 × 100, 소수점 첫째 자리 올림
+  const rate=Math.ceil((diff/tot*100)*10)/10;
+  bufferPct=rate;
+  if(el('hr-buffer-pct')) el('hr-buffer-pct').value=rate;
+  if(el('hr-auto-buffer-note'))
+    el('hr-auto-buffer-note').textContent=`조정율 ${rate}% 설정 → 목표 재원 ${Math.round(tot*(1-rate/100)).toLocaleString()}만원`;
+  hrUpdateReward();
+}
+function hrExportWithSettings(){
+  const settings={
+    hrDepts,
+    bonusBaseRate,bonusAdd,bonusMult,
+    gradePerf,gradePerfL12,gradeBaseUp,gradeBaseUpL12,
+    salaryMultMgr,salaryMultL3,salaryMultL12,
+    baseUpL3,baseUpL12,perfBaseL3,perfBaseL12,
+    tolerancePct,bufferPct,swapCross,swapLv,
+    swapMatrixMgr,swapMatrixMem,
+    hrResultEmail,hrFormsUrl,confirmedFund
+  };
+  const settingsJson=JSON.stringify(settings);
+  const injectScript='<scr'+'ipt id="__preset__">window.__HR_PRESET__='+settingsJson+';<\/scr'+'ipt>';
+
+  // 현재 파일 경로로 fetch
+  fetch(window.location.href)
+    .then(r=>r.text())
+    .then(html=>{
+      // 기존 preset 제거 후 새로 삽입
+      html=html.replace(/<script id="__preset__">[\s\S]*?<\/script>/,'');
+      html=html.replace('</head>',injectScript+'</head>');
+      const blob=new Blob([html],{type:'text/html;charset=utf-8'});
+      const url=URL.createObjectURL(blob);
+      const a=document.createElement('a');
+      a.href=url;
+      a.download='evaluation_simulator_배포용.html';
+      document.body.appendChild(a); a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    })
+    .catch(()=>{
+      alert('파일 생성 실패: 브라우저에서 로컬 파일 읽기가 차단되었습니다.\n\n대신 현재 파일을 직접 복사해서 전달하세요.\n세팅값은 코드 생성 탭의 각 본부 코드에 포함되어 있습니다.');
+    });
+}
+
+function hrExportWithSettings(){} // 미사용, 호환용
+
+function hrInitExportSelect(){
+  const sel=document.getElementById('hr-export-dept');
+  if(!sel) return;
+  sel.innerHTML='<option value="">본부 선택</option>';
+  hrDepts.forEach(d=>{
+    const op=document.createElement('option');
+    op.value=d.name; op.textContent=d.name;
+    sel.appendChild(op);
+  });
+}
+
+function hrBuildDeptFileHtml(dept, deptCode){
+  // 현재 URL에서 깨끗한 원본 HTML fetch (outerHTML 대신)
+  const baseUrl=window.location.origin+window.location.pathname;
+  return fetch(baseUrl)
+    .then(r=>r.text())
+    .then(html=>{
+      // 기존 preset 제거
+      html=html.replace(/<script id="__preset__">[\s\S]*?<\/script>/g,'');
+      html=html.replace(/<script id="__dept_preset__">[\s\S]*?<\/script>/g,'');
+      // 보상 세팅 + 본부 preset 주입
+      const settings={hrDepts,bonusBaseRate,bonusAdd,bonusMult,gradePerf,gradePerfL12,gradeBaseUp,gradeBaseUpL12,salaryMultMgr,salaryMultL3,salaryMultL12,baseUpL3,baseUpL12,perfBaseL3,perfBaseL12,tolerancePct,bufferPct,swapCross,swapLv,swapMatrixMgr,swapMatrixMem,hrResultEmail,hrFormsUrl,confirmedFund};
+      const cfg=fromDeptCode(deptCode);
+      const s1='<scr'+'ipt id="__preset__">window.__HR_PRESET__='+JSON.stringify(settings)+';<\/scr'+'ipt>';
+      const s2='<scr'+'ipt id="__dept_preset__">window.__DEPT_PRESET__='+JSON.stringify(cfg)+';<\/scr'+'ipt>';
+      html=html.includes('</head>')?html.replace('</head>',s1+s2+'</head>'):s1+s2+html;
+      return html;
+    });
+}
+
+function hrExportDeptFile(){
+  const sel=document.getElementById('hr-export-dept');
+  if(!sel||!sel.value){ alert('본부를 선택해 주세요.'); return; }
+  const deptName=sel.value;
+  // 해당 본부 코드 생성
+  const bl=makeBaseline(hrDepts);
+  const d=hrDepts.find(x=>x.name===deptName);
+  if(!d){ alert('본부를 찾을 수 없습니다.'); return; }
+  const di=hrDepts.indexOf(d);
+  const{bonus:db,salary:ds}=calcFund([d],[bl[di]]);
+  let baseFund=db+ds;
+  if(confirmedFund!==null){
+    const{bonus:totB,salary:totS}=calcFund(hrDepts,bl);
+    const totFund=totB+totS;
+    baseFund=totFund>0?Math.round(confirmedFund*(db+ds)/totFund):(db+ds);
+  }
+  const blBDept=[[...lookupTO('mgr','B',d.mgrN)],[...lookupTO('mem','B',d.memN)]];
+  const payload={dept:d,toBaseline:blBDept,baseFund,bonusAdd,bonusMult,gradePerf,gradePerfL12,gradeBaseUp,gradeBaseUpL12,salaryMultMgr,salaryMultL3,salaryMultL12,bonusBaseRate,baseUpL3,baseUpL12,perfBaseL3,perfBaseL12,tolerancePct,swapCross,swapLv,swapMatrixMgr,swapMatrixMem,hrFormsUrl,hrResultEmail};
+  const code=toDeptCode(payload);
+
+  hrBuildDeptFileHtml(d, code).then(html=>{
+    const blob=new Blob([html],{type:'text/html;charset=utf-8'});
+    const url=URL.createObjectURL(blob);
+    const a=document.createElement('a');
+    a.href=url;
+    a.download=`TO시뮬레이터_${deptName}.html`;
+    document.body.appendChild(a); a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  }).catch(()=>alert('파일 생성 실패. 네트워크 연결을 확인해 주세요.'));
+}
+
+function hrExportAllDeptFiles(){
+  if(!confirm(`전체 ${hrDepts.length}개 본부 파일을 순차적으로 다운로드합니다.\n팝업 차단을 허용해 주세요.`)) return;
+  const bl=makeBaseline(hrDepts);
+  let i=0;
+  function next(){
+    if(i>=hrDepts.length) return;
+    const d=hrDepts[i++];
+    const di=hrDepts.indexOf(d);
+    const{bonus:db,salary:ds}=calcFund([d],[bl[di]]);
+    let baseFund=db+ds;
+    if(confirmedFund!==null){
+      const{bonus:totB,salary:totS}=calcFund(hrDepts,bl);
+      const totFund=totB+totS;
+      baseFund=totFund>0?Math.round(confirmedFund*(db+ds)/totFund):(db+ds);
+    }
+    const blBDept=[[...lookupTO('mgr','B',d.mgrN)],[...lookupTO('mem','B',d.memN)]];
+    const payload={dept:d,toBaseline:blBDept,baseFund,bonusAdd,bonusMult,gradePerf,gradePerfL12,gradeBaseUp,gradeBaseUpL12,salaryMultMgr,salaryMultL3,salaryMultL12,bonusBaseRate,baseUpL3,baseUpL12,perfBaseL3,perfBaseL12,tolerancePct,swapCross,swapLv,swapMatrixMgr,swapMatrixMem,hrFormsUrl,hrResultEmail};
+    const code=toDeptCode(payload);
+    hrBuildDeptFileHtml(d,code).then(html=>{
+      const blob=new Blob([html],{type:'text/html;charset=utf-8'});
+      const url=URL.createObjectURL(blob);
+      const a=document.createElement('a');
+      a.href=url; a.download=`TO시뮬레이터_${d.name}.html`;
+      document.body.appendChild(a); a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+      setTimeout(next, 800); // 800ms 간격으로 순차 다운로드
+    }).catch(()=>{ alert(`${d.name} 파일 생성 실패`); next(); });
+  }
+  next();
+}
+
+function hrRenderEmailTemplateSelect(){
+  const sel=document.getElementById('hr-email-tmpl-dept');
+  if(!sel) return;
+  sel.innerHTML='<option value="">본부 선택</option>';
+  hrDepts.forEach(d=>{
+    const op=document.createElement('option');
+    op.value=d.name; op.textContent=d.name;
+    sel.appendChild(op);
+  });
+  sel.onchange=()=>hrPreviewEmailTemplate();
+}
+
+function hrPreviewEmailTemplate(){
+  const sel=document.getElementById('hr-email-tmpl-dept');
+  const preview=document.getElementById('hr-email-tmpl-preview');
+  if(!sel||!preview) return;
+  const deptName=sel.value;
+  if(!deptName){ preview.textContent='본부를 선택하면 이메일 본문이 표시됩니다.'; return; }
+  preview.textContent=hrBuildEmailTemplate(deptName);
+}
+
+function hrBuildEmailTemplate(deptName){
+  const bl=makeBaseline(hrDepts);
+  const d=hrDepts.find(d=>d.name===deptName);
+  if(!d) return '';
+  const di=hrDepts.indexOf(d);
+  const{bonus:db,salary:ds}=calcFund([d],[bl[di]]);
+  let baseFund=db+ds;
+  if(confirmedFund!==null){
+    const{bonus:totB,salary:totS}=calcFund(hrDepts,bl);
+    const totFund=totB+totS;
+    baseFund=totFund>0?Math.round(confirmedFund*(db+ds)/totFund):(db+ds);
+  }
+  const blBDept=[[...lookupTO('mgr','B',d.mgrN)],[...lookupTO('mem','B',d.memN)]];
+  const payload={dept:d,toBaseline:blBDept,baseFund,
+    swapMatrixMgr,swapMatrixMem,swapCross,swapLv,tolerancePct,
+    bonusAdd,bonusMult,gradePerf,gradePerfL12,gradeBaseUp,gradeBaseUpL12,
+    salaryMultMgr,salaryMultL3,salaryMultL12,
+    bonusBaseRate,baseUpL3,baseUpL12,perfBaseL3,perfBaseL12,
+    hrFormsUrl,hrResultEmail};
+  const code=toDeptCode(payload);
+  const baseUrl=window.location.origin+window.location.pathname;
+  const deptUrl=baseUrl+'?c='+code;
+
+  return `안녕하세요, ${deptName} 본부장님.
+
+평가 T/O 시뮬레이터를 통해 등급별 인원 배분을 조정해 주시기 바랍니다.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━
+■ 사용 방법
+━━━━━━━━━━━━━━━━━━━━━━━━━━
+1. 아래 링크 클릭 → 브라우저에서 바로 열림
+2. T/O 조정 완료 후 [결과 제출] 버튼 클릭
+3. 완료 (결과는 HR에 자동으로 전달됩니다)
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━
+■ ${deptName} 접속 링크
+━━━━━━━━━━━━━━━━━━━━━━━━━━
+${deptUrl}
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━
+※ 이 링크는 ${deptName}에만 사용 가능합니다.
+※ 문의사항은 HR 담당자에게 연락 주세요.`;
+}
+
+function hrCopyEmailTemplate(){
+  const sel=document.getElementById('hr-email-tmpl-dept');
+  const fb=document.getElementById('hr-email-tmpl-feedback');
+  if(!sel||!sel.value){ alert('본부를 선택해 주세요.'); return; }
+  const text=hrBuildEmailTemplate(sel.value);
+  const ta=document.createElement('textarea');
+  ta.value=text; ta.style.cssText='position:fixed;opacity:0;';
+  document.body.appendChild(ta); ta.select(); document.execCommand('copy');
+  document.body.removeChild(ta);
+  if(fb){ fb.textContent='✓ 복사 완료'; setTimeout(()=>fb.textContent='',2000); }
+}
+
+function hrRenderCodes(){
+  const bl=makeBaseline(hrDepts); let html='';
+  const baseUrl=window.location.origin+window.location.pathname;
+  hrDepts.forEach((dept,d)=>{
+    const{bonus:db,salary:ds}=calcFund([dept],[bl[d]]);
+    let baseFund=db+ds;
+    if(confirmedFund!==null){
+      const{bonus:totB,salary:totS}=calcFund(hrDepts,bl);
+      const totFund=totB+totS;
+      baseFund=totFund>0?Math.round(confirmedFund*(db+ds)/totFund):(db+ds);
+    }
+    const blBDept=[[...lookupTO('mgr','B',dept.mgrN)],[...lookupTO('mem','B',dept.memN)]];
+    const payload={dept,toBaseline:blBDept,baseFund,
+      swapMatrixMgr,swapMatrixMem,swapCross,swapLv,tolerancePct,
+      bonusAdd,bonusMult,gradePerf,gradePerfL12,gradeBaseUp,gradeBaseUpL12,
+      salaryMultMgr,salaryMultL3,salaryMultL12,
+      bonusBaseRate,baseUpL3,baseUpL12,perfBaseL3,perfBaseL12,
+      hrFormsUrl,hrResultEmail};
+    const code=toDeptCode(payload);
+    const deptUrl=baseUrl+'?c='+code;
+    html+=`<div class="card" style="margin-bottom:10px;">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
+        <span style="font-weight:600;font-size:13px;">${dept.name}</span>
+        <span style="font-size:11px;color:#888;">팀장 ${dept.mgrN}명 / 팀원 ${dept.memN}명 / 기준재원 ${baseFund.toLocaleString()}만원</span>
+      </div>
+      <div style="background:#f0eff8;border-radius:6px;padding:8px 12px;margin-bottom:8px;font-size:11px;color:#3C3489;word-break:break-all;" id="url-${d}">${deptUrl}</div>
+      <div style="display:flex;gap:8px;">
+        <button id="url-btn-${d}" onclick="copyDeptUrl('url-${d}','url-btn-${d}')"
+          style="padding:6px 14px;background:#534AB7;color:#fff;border:none;border-radius:6px;cursor:pointer;font-size:12px;">
+          🔗 URL 복사
+        </button>
+        <button onclick="copyCode('code-${d}')"
+          style="padding:6px 14px;background:#fff;color:#534AB7;border:1px solid #534AB7;border-radius:6px;cursor:pointer;font-size:12px;">
+          코드만 복사
+        </button>
+      </div>
+      <div style="display:none;" id="code-${d}">${code}</div>
+    </div>`;
+  });
+  document.getElementById('hr-codes-list').innerHTML=html;
+}
+
+function copyDeptUrl(elId,btnId){
+  const el=document.getElementById(elId);
+  const btn=document.getElementById(btnId);
+  if(!el) return;
+  const ta=document.createElement('textarea');
+  ta.value=el.textContent.trim();
+  ta.style.cssText='position:fixed;opacity:0;';
+  document.body.appendChild(ta); ta.select(); document.execCommand('copy');
+  document.body.removeChild(ta);
+  if(btn){btn.textContent='✓ 복사됨'; setTimeout(()=>btn.textContent='🔗 URL 복사',2000);}
+}
+function toCode(obj){ return btoa(unescape(encodeURIComponent(JSON.stringify(obj)))); }
+function fromCode(str){ return JSON.parse(decodeURIComponent(escape(atob(str)))); }
+
+const _DEF={
+  ba:[1.0,0.5,0,0,0,0],bm:[0,0,0.9,1.0,0.7,0.0],
+  gp:[2.5,1.8,1.3,1.0,0.5,0.0],gb:[1,1,1,1,1,1],sm:[1,1,1,1,1,1],
+  mm:[[null,2,3,null,null,null],[null,null,2,3,null,null],[null,null,null,2,null,null],[null,null,null,null,null,null],[null,null,null,null,null,null],[null,null,null,null,null,null]],
+  me:[[null,2,3,4,null,null],[null,null,2,3,null,null],[null,null,null,2,null,null],[null,null,null,null,null,null],[null,null,null,null,null,null],[null,null,null,null,null,null]],
+  sc:'allowed',sl:'allowed',tc:3
+};
+function _eq(a,b){return JSON.stringify(a)===JSON.stringify(b);}
+function _matEncode(mat){
+  const parts=[];
+  mat.forEach((row,i)=>row.forEach((v,j)=>{if(v!==null&&v!==0)parts.push(i+''+j+''+v);}));
+  return parts.join(',');
+}
+function _matDecode(str,size){
+  const mat=Array.from({length:size},()=>Array(size).fill(null));
+  if(!str) return mat;
+  str.split(',').forEach(p=>{
+    if(!p) return;
+    const i=+p[0], j=+p[1], v=+p.slice(2);
+    if(i<size&&j<size) mat[i][j]=v;
+  });
+  return mat;
+}
+
+function toDeptCode(payload){
+  const d=payload.dept;
+  const o={
+    d:{n:d.name,mn:d.mgrN,en:d.memN,mb:d.mgrBase||0,lb:d.l3Base,lb2:d.l12Base,og:d.orgGrade||'B'},
+    tb:payload.toBaseline,
+    bf:payload.baseFund,
+    // 보상 세팅 — 항상 포함 (본부장 PC에서 HR 세팅값 그대로 적용)
+    bbr:payload.bonusBaseRate,
+    ul3:payload.baseUpL3,    ul12:payload.baseUpL12,
+    pl3:payload.perfBaseL3,  pl12:payload.perfBaseL12,
+    tc:payload.tolerancePct,
+    sc:payload.swapCross==='blocked'?0:1,
+    sl:payload.swapLv==='blocked'?0:1
+  };
+  // 기본값과 다를 때만 포함 (배열류 — 같으면 생략해서 코드 길이 절약)
+  if(!_eq(payload.bonusAdd,_DEF.ba))        o.ba=payload.bonusAdd;
+  if(!_eq(payload.bonusMult,_DEF.bm))       o.bm=payload.bonusMult;
+  if(!_eq(payload.gradePerf,_DEF.gp))       o.gp=payload.gradePerf;
+  if(!_eq(payload.gradePerfL12,_DEF.gp))    o.gp2=payload.gradePerfL12;
+  if(!_eq(payload.gradeBaseUp,_DEF.gb))     o.gb=payload.gradeBaseUp;
+  if(!_eq(payload.gradeBaseUpL12,_DEF.gb))  o.gb2=payload.gradeBaseUpL12;
+  if(!_eq(payload.salaryMultMgr,_DEF.sm))   o.sm=payload.salaryMultMgr;
+  if(!_eq(payload.salaryMultL3,_DEF.sm))    o.sm2=payload.salaryMultL3;
+  if(!_eq(payload.salaryMultL12,_DEF.sm))   o.sm3=payload.salaryMultL12;
+  // matrix — 문자열 압축
+  const mmStr=_matEncode(payload.swapMatrixMgr||_DEF.mm);
+  const meStr=_matEncode(payload.swapMatrixMem||_DEF.me);
+  if(mmStr!==_matEncode(_DEF.mm)) o.mm=mmStr;
+  if(meStr!==_matEncode(_DEF.me)) o.me=meStr;
+  if(payload.hrFormsUrl)    o.fu=payload.hrFormsUrl;
+  if(payload.hrResultEmail) o.re=payload.hrResultEmail;
+  return btoa(unescape(encodeURIComponent(JSON.stringify(o))));
+}
+
+function fromDeptCode(str){
+  const o=JSON.parse(decodeURIComponent(escape(atob(str))));
+  if(o.dept) return o; // 구버전 호환
+  const mmStr=o.mm!=null?o.mm:_matEncode(_DEF.mm);
+  const meStr=o.me!=null?o.me:_matEncode(_DEF.me);
+  return {
+    dept:{name:o.d.n,mgrN:o.d.mn,memN:o.d.en,mgrBase:o.d.mb,l3Base:o.d.lb,l12Base:o.d.lb2,l3N:o.d.l3||0,l12N:o.d.l12||0,orgGrade:o.d.og||'B'},
+    toBaseline:o.tb,
+    baseFund:o.bf,
+    bonusAdd:      o.ba  ||_DEF.ba,
+    bonusMult:     o.bm  ||_DEF.bm,
+    gradePerf:     o.gp  ||_DEF.gp,
+    gradePerfL12:  o.gp2 ||o.gp||_DEF.gp,
+    gradeBaseUp:   o.gb  ||_DEF.gb,
+    gradeBaseUpL12:o.gb2 ||o.gb||_DEF.gb,
+    salaryMultMgr: o.sm  ||_DEF.sm,
+    salaryMultL3:  o.sm2 ||o.sm||_DEF.sm,
+    salaryMultL12: o.sm3 ||o.sm||_DEF.sm,
+    bonusBaseRate: o.bbr!=null?o.bbr:bonusBaseRate,
+    baseUpL3:      o.ul3!=null?o.ul3:baseUpL3,
+    baseUpL12:     o.ul12!=null?o.ul12:baseUpL12,
+    perfBaseL3:    o.pl3!=null?o.pl3:perfBaseL3,
+    perfBaseL12:   o.pl12!=null?o.pl12:perfBaseL12,
+    swapMatrixMgr: _matDecode(mmStr,6),
+    swapMatrixMem: _matDecode(meStr,6),
+    swapCross:     o.sc!=null?(o.sc?'allowed':'blocked'):_DEF.sc,
+    swapLv:        o.sl!=null?(o.sl?'allowed':'blocked'):_DEF.sl,
+    tolerancePct:  o.tc!=null?o.tc:_DEF.tc,
+    hrFormsUrl:    o.fu||'',
+    hrResultEmail: o.re||''
+  };
+}
+function copyCode(id){
+  navigator.clipboard.writeText(document.getElementById(id).textContent).then(()=>alert('복사되었습니다')).catch(()=>{
+    const el=document.getElementById(id),r=document.createRange();r.selectNode(el);window.getSelection().removeAllRanges();window.getSelection().addRange(r);document.execCommand('copy');window.getSelection().removeAllRanges();alert('복사되었습니다');
+  });
+}
+
+/* ── 본부장 ── */
+function launchDept(cfg){
+  hideDeptEntry();
+  document.getElementById('entry-screen').classList.add('hidden');
+  document.getElementById('dept-app').classList.remove('hidden');
+  document.getElementById('dept-app-badge').textContent=cfg.dept.name+' 본부장';
+  // 보상 세팅: cfg에 있으면 사용(구버전 코드 호환), 없으면 파일 내장값 그대로 사용
+  if(cfg.bonusAdd)      bonusAdd=cfg.bonusAdd;
+  if(cfg.bonusMult)     bonusMult=cfg.bonusMult;
+  if(cfg.gradePerf)     { gradePerf=cfg.gradePerf; gradePerfL12=cfg.gradePerfL12||cfg.gradePerf; }
+  if(cfg.gradeBaseUp)   { gradeBaseUp=cfg.gradeBaseUp; gradeBaseUpL12=cfg.gradeBaseUpL12||cfg.gradeBaseUp; }
+  if(cfg.salaryMultMgr) { salaryMultMgr=cfg.salaryMultMgr; salaryMultL3=cfg.salaryMultL3||salaryMultL3; salaryMultL12=cfg.salaryMultL12||salaryMultL12; }
+  if(cfg.bonusBaseRate!=null) bonusBaseRate=cfg.bonusBaseRate;
+  if(cfg.baseUpL3!=null)  baseUpL3=cfg.baseUpL3;
+  if(cfg.baseUpL12!=null) baseUpL12=cfg.baseUpL12;
+  if(cfg.perfBaseL3!=null)  perfBaseL3=cfg.perfBaseL3;
+  if(cfg.perfBaseL12!=null) perfBaseL12=cfg.perfBaseL12;
+  if(cfg.tolerancePct!=null) tolerancePct=cfg.tolerancePct;
+  if(cfg.swapCross)     swapCross=cfg.swapCross;
+  if(cfg.swapLv)        swapLv=cfg.swapLv;
+  if(cfg.swapMatrixMgr) swapMatrixMgr=cfg.swapMatrixMgr;
+  if(cfg.swapMatrixMem) swapMatrixMem=cfg.swapMatrixMem;
+  hrApiUrl='';
+  hrResultEmail=cfg.hrResultEmail||'';
+  hrFormsUrl=cfg.hrFormsUrl||'';
+  const og=cfg.dept.orgGrade||'B';
+  const ogTO=[
+    [...lookupTO('mgr',og,cfg.dept.mgrN)],
+    [...lookupTO('mem',og,cfg.dept.memN)]
+  ];
+  dState={dept:cfg.dept,
+    toBaseline:ogTO,
+    to:[ogTO[0].slice(),ogTO[1].slice()],
+    baseFund:cfg.baseFund,
+    swapCount:{mgr:{},mem:{}}};
+  dRenderTO();gsRenderRatioTables();gsRenderSimInputs();gsRenderSuggest();
+}
+function deptTab(id,btn){
+  document.querySelectorAll('#dept-app .page').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('#dept-app .tab-btn').forEach(b=>b.classList.remove('active'));
+  document.getElementById(id).classList.add('active');btn.classList.add('active');
+  if(id==='dept-result')dRenderResult();
+}
+function gsTab(id,btn){
+  document.querySelectorAll('.gpanel').forEach(p=>p.classList.remove('on'));
+  document.querySelectorAll('.gstab').forEach(b=>b.classList.remove('on'));
+  document.getElementById(id).classList.add('on');btn.classList.add('on');
+  if(id==='gs-suggest')gsRenderSuggest();
+}
+
+function dRenderBaselineTable(){
+  const{dept,toBaseline}=dState;
+  const og=dept.orgGrade||'B';
+  const ogLabel={S:'S등급',A:'A등급',B:'B이하'}[og];
+  const ogColor={S:'#0F6E56',A:'#185FA5',B:'#633806'}[og];
+  document.getElementById('d-org-grade-badge').innerHTML=
+    `조직평가등급: <span style="background:${ogColor}15;color:${ogColor};padding:2px 10px;border-radius:99px;font-weight:500;font-size:12px;">${ogLabel}</span>`;
+  if(document.getElementById('d-og-label'))
+    document.getElementById('d-og-label').textContent=`현재 조직등급 기준 (${ogLabel})`;
+
+  const makeTable=(ratios, baseline, total)=>{
+    let rows='<thead><tr>'
+      +'<th style="padding:3px 4px;font-size:10px;">등급</th>'
+      +'<th style="padding:3px 4px;font-size:10px;text-align:center;">비율</th>'
+      +'<th style="padding:3px 4px;font-size:10px;text-align:center;">인원</th>'
+      +'</tr></thead><tbody>';
+    for(let g=0;g<6;g++){
+      const isAbs=ratios[g]===null;
+      const pct=isAbs?'절대':(ratios[g]*100)+'%';
+      const n=baseline[g];
+      rows+=`<tr>
+        <td style="padding:2px 4px;"><span class="badge ${GC[g]}" style="font-size:9px;">${GL[g]}</span></td>
+        <td style="padding:2px 4px;text-align:center;font-size:10px;color:#555;">${pct}</td>
+        <td style="padding:2px 4px;text-align:center;font-size:11px;font-weight:500;">${isAbs?'별도':n+'명'}</td>
+      </tr>`;
+    }
+    rows+=`<tr style="border-top:0.5px solid rgba(0,0,0,0.1);">
+      <td colspan="2" style="padding:3px 4px;font-size:10px;color:#888;">합계</td>
+      <td style="padding:3px 4px;text-align:center;font-size:11px;font-weight:500;">${total}명</td>
+    </tr></tbody>`;
+    return rows;
+  };
+
+  // B이하 기준 테이블
+  const blB_mgr=lookupTO('mgr','B',dept.mgrN);
+  const blB_mem=lookupTO('mem','B',dept.memN);
+  if(document.getElementById('d-baseline-mgr-table-b'))
+    document.getElementById('d-baseline-mgr-table-b').innerHTML=makeTable(TO_RATIO.mgr['B'], blB_mgr, dept.mgrN);
+  if(document.getElementById('d-baseline-mem-table-b'))
+    document.getElementById('d-baseline-mem-table-b').innerHTML=makeTable(TO_RATIO.mem['B'], blB_mem, dept.memN);
+
+  // 현재 조직등급 기준 T/O (직접 조회)
+  const ogBaseline_mgr=lookupTO('mgr',og,dept.mgrN);
+  const ogBaseline_mem=lookupTO('mem',og,dept.memN);
+  document.getElementById('d-baseline-mgr-table').innerHTML=makeTable(TO_RATIO.mgr[og], ogBaseline_mgr, dept.mgrN);
+  document.getElementById('d-baseline-mem-table').innerHTML=makeTable(TO_RATIO.mem[og], ogBaseline_mem, dept.memN);
+}
+
+function dRenderTO(){
+  dRenderBaselineTable();
+  const{dept,to,baseFund}=dState;
+  document.getElementById('d-tolerance-range').textContent=baseFund.toLocaleString()+'만원';
+  document.getElementById('d-bar-min').textContent='0';
+  document.getElementById('d-bar-max').textContent='한도';
+  [['mgr',0,dept.mgrN,4],['mem',1,dept.memN,5]].forEach(([key,ti,total,relG])=>{
+    const cont=document.getElementById(`d-${key}-sliders`);cont.innerHTML='';
+    // 현재 배분 현황 표시 (읽기 전용)
+    let tableH='<table style="width:100%;font-size:12px;"><thead><tr>'
+      +'<th style="text-align:left;padding:3px 4px;">등급</th>'
+      +'<th style="text-align:center;padding:3px 4px;">기준</th>'
+      +'<th style="text-align:center;padding:3px 4px;">현재</th>'
+      +'<th style="text-align:center;padding:3px 4px;">변동</th>'
+      +'</tr></thead><tbody>';
+    for(let g=0;g<6;g++){
+      const isAbs=key==='mgr'?g>=4:g>=5;
+      if(isAbs) continue;
+      const base=dState.toBaseline[ti][g];
+      const cur=to[ti][g];
+      const diff=cur-base;
+      const diffStr=diff===0?'-':`<span style="color:${diff>0?'#A32D2D':'#0F6E56'};font-weight:600;">${diff>0?'+':''}${diff}</span>`;
+      tableH+=`<tr id="d-${key}-g${g}-row">
+        <td style="padding:3px 4px;"><span class="badge ${GC[g]}" style="font-size:10px;">${GL[g]}</span></td>
+        <td style="text-align:center;padding:3px 4px;color:#888;">${base}명</td>
+        <td style="text-align:center;padding:3px 4px;font-weight:600;" id="d-${key}-g${g}-val">${cur}명</td>
+        <td style="text-align:center;padding:3px 4px;" id="d-${key}-g${g}-pct">${diffStr}</td>
+      </tr>`;
+    }
+    tableH+='</tbody></table>';
+    cont.innerHTML=tableH;
+    dUpdateStatus(ti,key,total,relG);
+  });
+  dRenderSwapButtons();
+  dUpdateBudget();
+}
+
+function dRenderSwapButtons(){
+  const{dept,to,toBaseline,swapCount}=dState;
+  ['mgr','mem'].forEach(key=>{
+    const cont=document.getElementById(`d-swap-buttons-${key}`);
+    if(!cont) return;
+    const mat=key==='mgr'?swapMatrixMgr:swapMatrixMem;
+    const maxG=key==='mgr'?4:5;
+    const ti=key==='mgr'?0:1;
+    const total=key==='mgr'?dept.mgrN:dept.memN;
+    const relG=maxG;
+    const sc=(swapCount&&swapCount[key])||{};
+    let h=`<div style="font-size:11px;font-weight:500;color:#444;margin-bottom:6px;">${key==='mgr'?'팀장':'팀원'}</div>`;
+    let hasRule=false;
+    h+=`<div style="display:flex;flex-direction:column;gap:8px;">`;
+    for(let from=0;from<maxG;from++){
+      for(let toG=from+1;toG<maxG;toG++){
+        const n=mat[from][toG];
+        if(n===null||n===0) continue;
+        hasRule=true;
+        const k2=`${from}_${toG}`;
+        const cnt=sc[k2]||0;
+        const lowerSum=to[ti].slice(toG+1,maxG).reduce((a,b)=>a+b,0);
+        const canDo=to[ti][from]>=1&&lowerSum>=n;
+        const canUndo=cnt>0;
+        h+=`<div style="background:#f8f8ff;border-radius:8px;padding:8px 10px;">
+          <div style="font-size:11px;color:#534AB7;font-weight:500;margin-bottom:6px;">
+            ${GL[from]}→${GL[toG]} 하향 시 하위→${GL[toG]} +${n}명
+            ${cnt>0?`<span style="background:#534AB7;color:#fff;border-radius:4px;padding:1px 6px;margin-left:6px;font-size:10px;">${cnt}회 실행</span>`:''}
+          </div>
+          <div style="display:flex;gap:6px;">
+            <button style="flex:1;font-size:12px;padding:6px 0;border-radius:6px;
+              border:1px solid ${canDo?'#534AB7':'#ddd'};background:${canDo?'#EEEDFE':'#f5f5f3'};
+              color:${canDo?'#3C3489':'#bbb'};cursor:${canDo?'pointer':'not-allowed'};"
+              onclick="${canDo?`dExecSwap(${ti},'${key}',${from},${toG},${n},${total},${relG},1)`:''}"
+              ${canDo?'':'disabled'}>▼ 실행</button>
+            <button style="flex:1;font-size:12px;padding:6px 0;border-radius:6px;
+              border:1px solid ${canUndo?'#BA7517':'#ddd'};background:${canUndo?'#fff7f0':'#f5f5f3'};
+              color:${canUndo?'#633806':'#bbb'};cursor:${canUndo?'pointer':'not-allowed'};"
+              onclick="${canUndo?`dExecSwap(${ti},'${key}',${from},${toG},${n},${total},${relG},-1)`:''}"
+              ${canUndo?'':'disabled'}>▲ 되돌리기</button>
+          </div>
+        </div>`;
+      }
+    }
+    if(!hasRule) h+=`<span style="font-size:11px;color:#aaa;">설정된 교환 규칙 없음</span>`;
+    h+=`</div>`;
+    const changed=to[ti].some((v,i)=>v!==toBaseline[i]);
+    h+=`<button onclick="dResetTORole(${ti},'${key}',${total},${relG})"
+      style="margin-top:8px;font-size:11px;padding:4px 12px;border:1px solid ${changed?'#ccc':'#eee'};
+      border-radius:6px;background:#f5f5f3;color:${changed?'#555':'#bbb'};cursor:${changed?'pointer':'default'};"
+      ${changed?'':'disabled'}>↺ 전체 초기화</button>`;
+    cont.innerHTML=h;
+  });
+}
+function dExecSwap(ti,key,from,toG,n,total,relG,dir=1){
+  const newTo=[...dState.to[ti]];
+  const maxG=key==='mgr'?4:5;
+  if(dir===1){
+    // 실행: from-1, toG+(1+n), 하위-n
+    newTo[from]-=1;
+    newTo[toG]+=1; // 하향분 1명
+    let remaining=n;
+    for(let src=toG+1;src<maxG&&remaining>0;src++){
+      const take=Math.min(newTo[src],remaining);
+      newTo[src]-=take; newTo[toG]+=take; remaining-=take;
+    }
+    if(remaining>0){ showToast(`하위등급에 충분한 인원이 없습니다. (${remaining}명 부족)`,'warn'); return; }
+  } else {
+    // 되돌리기: 실행의 완전 역방향
+    // 실행 시: from-1, toG+(1+n), 하위등급-n
+    // 되돌리기: from+1, toG-(1+n), 하위등급+n
+    newTo[from]+=1;
+    newTo[toG]-=(1+n);
+    // 하위등급에 n명 반환 (toG 바로 아래부터)
+    let remaining=n;
+    for(let src=toG+1;src<maxG&&remaining>0;src++){
+      const give=remaining;
+      newTo[src]+=give;
+      remaining=0;
+    }
+    if(newTo[toG]<0){ showToast('되돌릴 수 없습니다.','warn'); return; }
+  }
+  if(newTo.some(v=>v<0)){ showToast('인원 범위를 초과합니다.','warn'); return; }
+  dState.to[ti]=newTo;
+  // swapCount 업데이트
+  if(!dState.swapCount) dState.swapCount={mgr:{},mem:{}};
+  const k2=`${from}_${toG}`;
+  dState.swapCount[key][k2]=(dState.swapCount[key][k2]||0)+dir;
+  if(dState.swapCount[key][k2]<0) dState.swapCount[key][k2]=0;
+  dRenderCurrentTO(ti,key,total,relG);
+  dRenderSwapButtons();
+  dUpdateStatus(ti,key,total,relG);
+  dUpdateBudget();
+  gsRenderSuggest();
+}
+
+function dResetTORole(ti,key,total,relG){
+  dState.to[ti]=dState.toBaseline[ti].slice();
+  if(dState.swapCount) dState.swapCount[key]={};
+  dRenderCurrentTO(ti,key,total,relG);
+  dRenderSwapButtons();
+  dUpdateStatus(ti,key,total,relG);
+  dUpdateBudget();
+  gsRenderSuggest();
+}
+
+function dRenderCurrentTO(ti,key,total,relG){
+  const to=dState.to[ti];
+  const baseline=dState.toBaseline[ti];
+  const maxG=key==='mgr'?4:5;
+  for(let g=0;g<maxG;g++){
+    const valEl=document.getElementById(`d-${key}-g${g}-val`);
+    const pctEl=document.getElementById(`d-${key}-g${g}-pct`);
+    if(!valEl) continue;
+    const diff=to[g]-baseline[g];
+    valEl.textContent=to[g]+'명';
+    pctEl.innerHTML=diff===0?'-':`<span style="color:${diff>0?'#A32D2D':'#0F6E56'};font-weight:600;">${diff>0?'+':''}${diff}</span>`;
+  }
+}
+
+function dResetTO(){
+  const{dept,toBaseline}=dState;
+  dState.to=[JSON.parse(JSON.stringify(toBaseline[0])),JSON.parse(JSON.stringify(toBaseline[1]))];
+  dRenderTO();
+  gsRenderSuggest();
+}
+
+function showToast(msg,type='warn'){
+  let toast=document.getElementById('d-swap-toast');
+  if(!toast){
+    toast=document.createElement('div');
+    toast.id='d-swap-toast';
+    toast.style.cssText='position:fixed;bottom:24px;left:50%;transform:translateX(-50%);background:#633806;color:#fff;padding:10px 20px;border-radius:8px;font-size:13px;z-index:9999;box-shadow:0 4px 12px rgba(0,0,0,0.2);transition:opacity 0.3s;';
+    document.body.appendChild(toast);
+  }
+  toast.textContent=msg;
+  toast.style.background=type==='warn'?'#633806':'#A32D2D';
+  toast.style.opacity='1';
+  clearTimeout(toast._timer);
+  toast._timer=setTimeout(()=>toast.style.opacity='0',2500);
+}
+function dUpdateTO(ti,g,val,key,total,relG){
+  dState.to[ti][g]=val;
+  dUpdateStatus(ti,key,total,relG);dUpdateBudget();gsRenderSuggest();
+}
+function dUpdateStatus(ti,key,total,relG){
+  const arr=dState.to[ti],rel=arr.slice(0,relG).reduce((a,b)=>a+b,0),abs=arr.slice(relG).reduce((a,b)=>a+b,0),diff=total-rel-abs;
+  const el=document.getElementById(`d-${key}-status`);
+  if(diff===0) el.innerHTML=`<div class="alert alert-ok">합계 ${total}명 ✓</div>`;
+  else if(diff>0) el.innerHTML=`<div class="alert alert-warn">미배분 ${diff}명 남음</div>`;
+  else el.innerHTML=`<div class="alert alert-err">초과 ${Math.abs(diff)}명</div>`;
+}
+function dUpdateBudget(){
+  const{dept,to,baseFund}=dState;
+  const cur=calcDeptFund(dept,to);
+  const over=cur>baseFund;
+  document.getElementById('d-cur-budget').textContent=cur.toLocaleString()+'만원';
+  document.getElementById('d-cur-budget').style.color=over?'#A32D2D':'#1a1a18';
+  const delta=cur-baseFund;
+  document.getElementById('d-cur-budget-sub').innerHTML=
+    over
+      ? `<span style="color:#A32D2D;font-weight:600;">한도 초과 ${(cur-baseFund).toLocaleString()}만원 ▲</span>`
+      : delta===0 ? '한도 내'
+      : `한도 대비 <span class="${delta>0?'delta-neg':'delta-pos'}">${delta>0?'+':''}${delta.toLocaleString()}만원</span>`;
+  document.getElementById('d-tolerance-range').textContent=baseFund.toLocaleString()+'만원';
+  // 게이지: 0~100%, 50%=한도
+  const bar=document.getElementById('d-budget-bar');
+  const pct=baseFund>0?Math.round(cur/baseFund*50):0;
+  const clampedPct=Math.min(Math.max(pct,0),100);
+  bar.style.width=clampedPct+'%';
+  bar.style.background=over?'#A32D2D':clampedPct>=49?'#BA7517':'#1D9E75';
+  document.getElementById('d-bar-cur').textContent=cur.toLocaleString()+'만원';
+}
+
+/* ── 교환 비율표 ── */
+function rcell(r){
+  if(r<=0||!isFinite(r)) return '<span style="color:#ddd;font-size:10px;">✕</span>';
+  const n=Math.ceil(r);
+  const txt=n+'명';
+  const cls=n>=2?'ratio-high':n>=1?'ratio-mid':'ratio-low';
+  return `<span class="ratio-cell ${cls}">${txt}</span>`;
+}
+function rcellBlocked(){ return '<span style="color:#bbb;font-size:10px;background:#f5f5f3;border-radius:4px;padding:1px 6px;">제한</span>'; }
+
+function buildRatioTable(fromFn,toFn,fromG,toG,elId,sameSide,isCrossTable){
+  const el=document.getElementById(elId);
+  if(!el) return;
+  const isSwapCrossBlocked = isCrossTable && swapCross==='blocked';
+  let h='<tr><th style="font-size:10px;padding:4px 6px;">↓ / ↗</th>';
+  for(let ti=0;ti<toG;ti++) h+=`<th style="padding:3px 4px;"><span class="badge ${GC[ti]}" style="font-size:10px;">${GL[ti]}</span></th>`;
+  h+='</tr>';
+  let b='';
+  for(let fi=0;fi<fromG;fi++){
+    b+=`<tr><td style="padding:4px 6px;"><span class="badge ${GC[fi]}" style="font-size:10px;">${GL[fi]}</span></td>`;
+    for(let ti=0;ti<toG;ti++){
+      if(sameSide&&fi===ti){b+='<td style="padding:3px 4px;text-align:center;"><span style="color:#ccc;font-size:10px;">—</span></td>';continue;}
+      if(sameSide&&fi>=ti){b+='<td style="padding:3px 4px;text-align:center;"><span style="color:#ddd;font-size:10px;">✕</span></td>';continue;}
+      if(isSwapCrossBlocked){b+=`<td style="padding:3px 4px;text-align:center;">${rcellBlocked()}</td>`;continue;}
+      const r=fromFn(fi)/toFn(ti);
+      b+=`<td style="padding:3px 4px;text-align:center;">${rcell(r)}</td>`;
+    }
+    b+='</tr>';
+  }
+  el.innerHTML=`<thead>${h}</thead><tbody>${b}</tbody>`;
+}
+function gsRenderRatioTables(){
+  const{dept,to,toBaseline}=dState;
+  ['mgr','mem'].forEach(role=>{
+    const elId=`gs-matrix-${role}-rules`;
+    const el=document.getElementById(elId);
+    if(!el) return;
+    const mat=role==='mgr'?swapMatrixMgr:swapMatrixMem;
+    const maxG=role==='mgr'?4:5;
+    const ti=role==='mgr'?0:1;
+    const rules=[];
+    for(let from=0;from<maxG;from++){
+      for(let to2=from+1;to2<maxG;to2++){
+        const n=mat[from][to2];
+        if(n===null||n===0) continue;
+        // 실행 가능 여부: from 1명 이상 + to2 하위등급 합산 n명 이상
+        const lowerSum=to[ti].slice(to2+1,maxG).reduce((a,b)=>a+b,0);
+        if(to[ti][from]<1||lowerSum<n) continue; // 불가능 규칙 숨김
+        rules.push({from,to:to2,n});
+      }
+    }
+    if(!rules.length){
+      el.innerHTML=`<div style="font-size:11px;color:#aaa;padding:6px 0;">적용 가능한 교환 규칙 없음</div>`;
+      return;
+    }
+    let h='';
+    rules.forEach(({from,to:to2,n})=>{
+      h+=`<div style="display:flex;align-items:center;gap:6px;padding:5px 8px;margin-bottom:4px;background:#f8f8ff;border-radius:6px;border-left:3px solid #534AB7;">
+        <span class="badge ${GC[from]}" style="font-size:10px;">${GL[from]}</span>
+        <span style="font-size:11px;color:#555;">1명 하향</span>
+        <span style="font-size:13px;color:#888;">→</span>
+        <span style="font-size:11px;color:#555;">하위등급에서</span>
+        <span class="badge ${GC[to2]}" style="font-size:10px;">${GL[to2]}</span>
+        <span style="font-size:11px;color:#555;">으로</span>
+        <span style="font-size:13px;font-weight:700;color:#3C3489;">${n}명</span>
+        <span style="font-size:11px;color:#555;">상향 가능</span>
+      </div>`;
+    });
+    el.innerHTML=h;
+  });
+  const lvNote=document.getElementById('gs-lv-note');
+  if(lvNote) lvNote.style.display=swapLv==='blocked'?'block':'none';
+}
+
+/* ── 교환 시뮬 ── */
+function gsRenderSimInputs(){
+  const dept=dState.dept;
+  const types=[{k:'mgr',label:'팀장',fn:g=>unitCostMgr(dept,g),grades:4},{k:'mem',label:'팀원',fn:g=>unitCostMem(dept,g),grades:5}];
+  let dH='',uH='';
+  types.forEach(({k,label,grades})=>{
+    for(let g=0;g<grades;g++){
+      dH+=`<div style="display:flex;align-items:center;gap:4px;margin-bottom:5px;"><span style="font-size:11px;color:#555;min-width:26px;">${label}</span><span class="badge ${GC[g]}" style="font-size:10px;">${GL[g]}</span><input type="number" id="gs-dn-${k}-${g}" value="0" min="0" max="50" style="width:42px;font-size:12px;" oninput="gsCalcSim()"><span style="font-size:11px;color:#888;">명</span></div>`;
+      uH+=`<div style="display:flex;align-items:center;gap:4px;margin-bottom:5px;"><span style="font-size:11px;color:#555;min-width:26px;">${label}</span><span class="badge ${GC[g]}" style="font-size:10px;">${GL[g]}</span><input type="number" id="gs-up-${k}-${g}" value="0" min="0" max="50" style="width:42px;font-size:12px;" oninput="gsCalcSim()"><span style="font-size:11px;color:#888;">명</span></div>`;
+    }
+  });
+  document.getElementById('gs-sim-down').innerHTML=dH;
+  document.getElementById('gs-sim-up').innerHTML=uH;
+  gsCalcSim();
+}
+function gsCalcSim(){
+  const dept=dState.dept;
+  const types=[{k:'mgr',fn:g=>unitCostMgr(dept,g),grades:4},{k:'mem',fn:g=>unitCostMem(dept,g),grades:5}];
+  let released=0,consumed=0;
+  let mgrReleased=0,mgrConsumed=0,memReleased=0,memConsumed=0;
+  types.forEach(({k,fn,grades})=>{
+    for(let g=0;g<grades;g++){
+      const dn=(+(document.getElementById(`gs-dn-${k}-${g}`)?.value||0))*fn(g);
+      const up=(+(document.getElementById(`gs-up-${k}-${g}`)?.value||0))*fn(g);
+      released+=dn; consumed+=up;
+      if(k==='mgr'){mgrReleased+=dn;mgrConsumed+=up;}
+      else{memReleased+=dn;memConsumed+=up;}
+    }
+  });
+  // swapCross 차단 시 팀장→팀원 교환 불가 경고
+  const crossViolation = swapCross==='blocked' && ((mgrReleased>0&&memConsumed>0)||(memReleased>0&&mgrConsumed>0));
+  const diff=released-consumed,absDiff=Math.abs(Math.round(diff));
+  let color,msg;
+  if(crossViolation){
+    color='#A32D2D';msg='팀장 ↔ 팀원 간 교환이 제한되어 있습니다';
+  } else if(absDiff<1){
+    color='#0F6E56';msg='재원 중립 ✓ 이 조합으로 조정 가능합니다';
+  } else if(diff>0){
+    color='#633806';msg=`재원 ${absDiff.toLocaleString()}만원 절감 — 추가 상향 여력 있음`;
+  } else {
+    color='#A32D2D';msg=`재원 ${absDiff.toLocaleString()}만원 초과 — 추가 하향 필요`;
+  }
+  document.getElementById('gs-sim-result').innerHTML=`<div class="trade-result-box">
+    <div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:6px;">
+      <span>해방: <strong>${Math.round(released).toLocaleString()}만원</strong></span>
+      <span>투입: <strong>${Math.round(consumed).toLocaleString()}만원</strong></span>
+    </div>
+    <div style="font-size:12px;font-weight:500;color:${color};">${msg}</div>
+  </div>`;
+}
+
+/* ── 조정 제안 ── */
+function gsRenderSuggest(){
+  if(!dState.dept) return;
+  const dept=dState.dept;
+  const{to,baseFund}=dState;
+  const cur=calcDeptFund(dept,to),diff=cur-baseFund,absDiff=Math.abs(diff);
+  if(absDiff<1){
+    document.getElementById('gs-suggest-list').innerHTML='<div class="alert alert-ok" style="font-size:12px;">현재 T/O는 재원 중립 상태입니다 ✓</div>';
+    return;
+  }
+  const over=diff>0;
+  let html=`<div class="alert ${over?'alert-err':'alert-warn'}" style="font-size:12px;margin-bottom:10px;">
+    ${over?`재원 ${Math.round(diff).toLocaleString()}만원 초과 → 하향 필요`:`재원 ${Math.round(-diff).toLocaleString()}만원 여유 → 상향 가능`}
+  </div>`;
+  const types=[{label:'팀장',fn:g=>unitCostMgr(dept,g),grades:4},{label:'팀원',fn:g=>unitCostMem(dept,g),grades:5}];
+  const suggs=[];
+  types.forEach(({label,fn,grades})=>{
+    for(let g=0;g<grades;g++){
+      const uc=fn(g);if(uc<=0) continue;
+      const n=absDiff/uc;if(n<0.3) continue;
+      suggs.push({label:`${label} ${GL[g]}`,n,uc,gc:GC[g]});
+    }
+  });
+  suggs.sort((a,b)=>Math.abs(Math.round(a.n)-a.n)-Math.abs(Math.round(b.n)-b.n));
+  suggs.slice(0,6).forEach(s=>{
+    const ni=Math.round(s.n),residual=Math.round(Math.abs(absDiff-ni*s.uc));
+    html+=`<div style="background:#f5f5f3;border-radius:7px;padding:9px 12px;margin-bottom:6px;">
+      <div style="display:flex;align-items:center;gap:5px;margin-bottom:3px;">
+        <span class="badge ${s.gc}" style="font-size:10px;">${s.label}</span>
+        <strong style="font-size:13px;">${ni}명 ${over?'하향':'상향'}</strong>
+        ${residual>0?`<span style="color:#888;font-size:11px;">잔여 ~${residual.toLocaleString()}만원</span>`:'<span style="color:#0F6E56;font-size:11px;">완전 중립</span>'}
+      </div>
+      <div style="color:#888;font-size:11px;">${Math.round(s.uc).toLocaleString()}만원/명 × ${ni}명 = ${Math.round(ni*s.uc).toLocaleString()}만원</div>
+    </div>`;
+  });
+  document.getElementById('gs-suggest-list').innerHTML=html;
+}
+
+/* ── 보상 예측 ── */
+function dRenderResult(){
+  const{dept,to,toBaseline,baseFund}=dState;
+  const l3N=getL3N(dept),l12N=getL12N(dept);
+  document.getElementById('d-result-lv-note').innerHTML=
+    `보상 계산 기준: 팀장 ${(dept.mgrBase||dept.l3Base).toLocaleString()}만원 / <span class="badge lv3">L3</span> 팀원 ${dept.l3Base.toLocaleString()}만원 (Base-up ${baseUpL3.toLocaleString()}만원) / <span class="badge lv12">L1·L2</span> 팀원 ${dept.l12Base.toLocaleString()}만원 (Base-up ${baseUpL12.toLocaleString()}만원)`;
+  let tBonus=0,tSalary=0,bBonus=0,bSalary=0,rows='';
+  for(let g=0;g<6;g++){
+    const mN=to[0][g], eN=to[1][g];
+    const bm=toBaseline[0][g], be=toBaseline[1][g];
+    // splitL3L12으로 정수 배분 (calcFund와 동일 로직)
+    const[l3gN,l12gN]=splitL3L12(eN,l3N,l12N);
+    const[bl3gN,bl12gN]=splitL3L12(be,l3N,l12N);
+    const mBase=(dept.mgrBase||dept.l3Base)*(salaryMultMgr[g]||1.0);
+    const l3Base=dept.l3Base*(salaryMultL3[g]||1.0);
+    const l12Base=dept.l12Base*(salaryMultL12[g]||1.0);
+    // 성과급
+    const mgrBonus=Math.round(mBase*bonusRateFinal(g)*mN);
+    const l3Bonus =Math.round(l3Base*bonusRateFinal(g)*l3gN);
+    const l12Bonus=Math.round(l12Base*bonusRateFinal(g)*l12gN);
+    const bonus=mgrBonus+l3Bonus+l12Bonus;
+    // 연봉인상
+    const mgrSal =Math.round((baseUpAmtL3(g)+perfAmtL3(g))*mN);
+    const l3Sal  =Math.round((baseUpAmtL3(g)+perfAmtL3(g))*l3gN);
+    const l12Sal =Math.round((baseUpAmtL12(g)+perfAmtL12(g))*l12gN);
+    const sal=mgrSal+l3Sal+l12Sal;
+    // 기준 (baseline)
+    const bmBase=(dept.mgrBase||dept.l3Base)*(salaryMultMgr[g]||1.0);
+    const bbonus=Math.round(bmBase*bonusRateFinal(g)*bm)
+                +Math.round(l3Base*bonusRateFinal(g)*bl3gN)
+                +Math.round(l12Base*bonusRateFinal(g)*bl12gN);
+    const bsal  =Math.round((baseUpAmtL3(g)+perfAmtL3(g))*bm)
+                +Math.round((baseUpAmtL3(g)+perfAmtL3(g))*bl3gN)
+                +Math.round((baseUpAmtL12(g)+perfAmtL12(g))*bl12gN);
+  tBonus+=bonus; tSalary+=sal; bBonus+=bbonus; bSalary+=bsal;
+    const fmt=(v,b)=>v!==b?` <span class="${v>b?'delta-neg':'delta-pos'}">(${v>b?'+':''}${v-b})</span>`:'';
+    rows+=`<tr>
+      <td><span class="badge ${GC[g]}">${GL[g]}</span></td>
+      <td>${mN}명${fmt(mN,bm)}</td><td>${eN}명${fmt(eN,be)}</td>
+      <td>${bonus.toLocaleString()}</td><td>${sal.toLocaleString()}</td>
+      <td>${(bonus+sal).toLocaleString()}</td>
+    </tr>`;
+  }
+  document.getElementById('d-result-tbody').innerHTML=rows;
+  const delta=(tBonus+tSalary)-(bBonus+bSalary);
+  document.getElementById('d-r-bonus').textContent=tBonus.toLocaleString()+'만원';
+  document.getElementById('d-r-salary').textContent=tSalary.toLocaleString()+'만원';
+  document.getElementById('d-r-total').textContent=(tBonus+tSalary).toLocaleString()+'만원';
+  document.getElementById('d-r-delta').innerHTML=delta===0?'-':`<span class="${delta>0?'delta-neg':'delta-pos'}">${delta>0?'+':''}${delta.toLocaleString()}만원</span>`;
+  // 개인 보상 예시 (4등급 기준)
+  const mgrBaseVal=dept.mgrBase||dept.l3Base;
+  const mgrBonus4=Math.round(mgrBaseVal*(salaryMultMgr[BASE_GRADE]||1.0)*bonusRateFinal(BASE_GRADE));
+  const mgrPerf4=Math.round(perfAmtL3(BASE_GRADE));
+  const mgrBaseUp4=Math.round(baseUpAmtL3(BASE_GRADE));
+  const mgrSal4=mgrBaseUp4+mgrPerf4;
+  const l3Bonus4=Math.round(dept.l3Base*(salaryMultL3[BASE_GRADE]||1.0)*bonusRateFinal(BASE_GRADE));
+  const l3Perf4=Math.round(perfAmtL3(BASE_GRADE));
+  const l3BaseUp4=Math.round(baseUpAmtL3(BASE_GRADE));
+  const l3Sal4=l3BaseUp4+l3Perf4;
+  const l12Bonus4=Math.round(dept.l12Base*(salaryMultL12[BASE_GRADE]||1.0)*bonusRateFinal(BASE_GRADE));
+  const l12Perf4=Math.round(perfAmtL12(BASE_GRADE));
+  const l12BaseUp4=Math.round(baseUpAmtL12(BASE_GRADE));
+  const l12Sal4=l12BaseUp4+l12Perf4;
+  const rowStyle='style="background:rgba(0,0,0,0.02);"';
+  document.getElementById('d-person-tbody').innerHTML=`
+    <tr><td>팀장 4등급 예시</td>
+      <td>${mgrBaseVal.toLocaleString()}만원</td>
+      <td>${mgrBonus4.toLocaleString()}만원 <span style="font-size:10px;color:#888;">(${bonusFinalPct(BASE_GRADE)}%)</span></td>
+      <td>${mgrBaseUp4.toLocaleString()}만원</td>
+      <td>${mgrPerf4.toLocaleString()}만원</td>
+      <td ${rowStyle}><strong>${mgrSal4.toLocaleString()}만원</strong></td>
+      <td><strong>${(mgrBonus4+mgrSal4).toLocaleString()}만원</strong></td></tr>
+    <tr><td><span class="badge lv3">L3</span> 팀원 4등급 예시</td>
+      <td>${dept.l3Base.toLocaleString()}만원</td>
+      <td>${l3Bonus4.toLocaleString()}만원 <span style="font-size:10px;color:#888;">(${bonusFinalPct(BASE_GRADE)}%)</span></td>
+      <td>${l3BaseUp4.toLocaleString()}만원</td>
+      <td>${l3Perf4.toLocaleString()}만원</td>
+      <td ${rowStyle}><strong>${l3Sal4.toLocaleString()}만원</strong></td>
+      <td><strong>${(l3Bonus4+l3Sal4).toLocaleString()}만원</strong></td></tr>
+    <tr><td><span class="badge lv12">L1·L2</span> 팀원 4등급 예시</td>
+      <td>${dept.l12Base.toLocaleString()}만원</td>
+      <td>${l12Bonus4.toLocaleString()}만원 <span style="font-size:10px;color:#888;">(${bonusFinalPct(BASE_GRADE)}%)</span></td>
+      <td>${l12BaseUp4.toLocaleString()}만원</td>
+      <td>${l12Perf4.toLocaleString()}만원</td>
+      <td ${rowStyle}><strong>${l12Sal4.toLocaleString()}만원</strong></td>
+      <td><strong>${(l12Bonus4+l12Sal4).toLocaleString()}만원</strong></td></tr>`;
+}
+</script>
+</body>
+</html>
